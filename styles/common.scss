@@ -1,0 +1,211 @@
+/**
+ * 通用样式
+ */
+
+/* 主题颜色 */
+$color-primary: #0A2540;
+$color-accent: #00D4AA;
+$color-background: #F7F9FA;
+$color-white: #FFFFFF;
+$color-text-primary: #0A2540;
+$color-text-secondary: #4A5568;
+$color-text-tertiary: #A0AEC0;
+$color-border: #E8ECF1;
+$color-danger: #EF4444;
+$color-warning: #F97316;
+$color-success: #10B981;
+
+/* 字体大小 */
+$font-size-large: 18px;
+$font-size-medium: 16px;
+$font-size-base: 14px;
+$font-size-small: 12px;
+
+/* 间距 */
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 12px;
+$spacing-lg: 16px;
+$spacing-xl: 20px;
+$spacing-xxl: 24px;
+
+/* 圆角 */
+$border-radius-sm: 4px;
+$border-radius-md: 8px;
+$border-radius-lg: 12px;
+$border-radius-xl: 16px;
+$border-radius-full: 50%;
+
+/* 阴影 */
+$shadow-sm: 0 1px 2px rgba(10, 37, 64, 0.04);
+$shadow-md: 0 2px 8px rgba(10, 37, 64, 0.04);
+$shadow-lg: 0 4px 12px rgba(10, 37, 64, 0.08);
+
+/* 通用类 */
+.flex {
+    display: flex;
+}
+
+.flex-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.flex-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-ellipsis {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+}
+
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+}
+
+/* 卡片样式 */
+.card {
+    background-color: $color-white;
+    border-radius: $border-radius-md;
+    padding: $spacing-lg;
+    box-shadow: $shadow-md;
+}
+
+/* 按钮样式 */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-md $spacing-lg;
+    border-radius: $border-radius-md;
+    font-size: $font-size-base;
+    border: none;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn-primary {
+    background-color: $color-accent;
+    color: $color-primary;
+    font-weight: 600;
+}
+
+.btn-secondary {
+    background-color: $color-border;
+    color: $color-text-secondary;
+}
+
+.btn-danger {
+    background-color: $color-danger;
+    color: $color-white;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+}
+
+/* 输入框样式 */
+.input {
+    width: 100%;
+    padding: $spacing-md;
+    background-color: $color-background;
+    border-radius: $border-radius-md;
+    font-size: $font-size-base;
+    color: $color-text-secondary;
+    border: none;
+    outline: none;
+}
+
+/* 标签样式 */
+.tag {
+    display: inline-block;
+    padding: $spacing-xs $spacing-md;
+    border-radius: $border-radius-sm;
+    font-size: $font-size-small;
+}
+
+/* 徽标样式 */
+.badge {
+    min-width: 20px;
+    height: 20px;
+    padding: 0 $spacing-xs;
+    background-color: $color-danger;
+    border-radius: $border-radius-full;
+    font-size: $font-size-small;
+    color: $color-white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 空状态样式 */
+.empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-xxl;
+}
+
+.empty-icon {
+    width: 120px;
+    height: 120px;
+    margin-bottom: $spacing-lg;
+}
+
+.empty-text {
+    font-size: $font-size-medium;
+    color: $color-text-secondary;
+    margin-bottom: $spacing-sm;
+}
+
+.empty-tip {
+    font-size: $font-size-base;
+    color: $color-text-tertiary;
+}
+
+/* 加载更多状态 */
+.loading-more,
+.no-more {
+    padding: $spacing-xl;
+    text-align: center;
+    color: $color-text-tertiary;
+    font-size: $font-size-base;
+}

@@ -1,0 +1,134 @@
+/**
+ * 全局样式变量
+ */
+/* 主题颜色 */
+/* 原有 uni-app 变量 */
+/* 字体大小 */
+/* 边框圆角 */
+/* 间距 */
+.container.data-v-1cf27b2a {
+  min-height: 100vh;
+  background-color: #F7F9FA;
+}
+.search-bar.data-v-1cf27b2a {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background-color: #FFFFFF;
+  margin: 8px 16px;
+  border-radius: 8px;
+}
+.search-bar .placeholder.data-v-1cf27b2a {
+  margin-left: 8px;
+  font-size: 14px;
+  color: #A0AEC0;
+}
+.tab-scroll.data-v-1cf27b2a {
+  background-color: #FFFFFF;
+  white-space: nowrap;
+}
+.tab-scroll .tab-list.data-v-1cf27b2a {
+  display: inline-flex;
+  padding: 0 16px;
+}
+.tab-item.data-v-1cf27b2a {
+  padding: 14px 16px;
+  font-size: 14px;
+  color: #4A5568;
+  position: relative;
+}
+.tab-item.active.data-v-1cf27b2a {
+  color: #0A2540;
+  font-weight: 600;
+}
+.tab-item.active.data-v-1cf27b2a::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2px;
+  background-color: #00D4AA;
+}
+.content.data-v-1cf27b2a {
+  padding: 16px;
+}
+.info-card.data-v-1cf27b2a {
+  background: linear-gradient(135deg, #00D4AA 0%, #0A2540 100%);
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+.info-card .info-title.data-v-1cf27b2a {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin-bottom: 8px;
+}
+.info-card .info-text.data-v-1cf27b2a {
+  display: block;
+  font-size: 14px;
+  color: #FFFFFF;
+  opacity: 0.9;
+}
+.test-card.data-v-1cf27b2a {
+  background-color: #FFFFFF;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 8px rgba(10, 37, 64, 0.04);
+}
+.test-card.data-v-1cf27b2a:active {
+  transform: scale(0.98);
+}
+.card-header.data-v-1cf27b2a {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+.urgent-tag.data-v-1cf27b2a {
+  font-size: 12px;
+  color: #EF4444;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+.card-title.data-v-1cf27b2a {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0A2540;
+  line-height: 1.5;
+}
+.card-meta.data-v-1cf27b2a {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: #A0AEC0;
+  margin-bottom: 12px;
+}
+.card-meta .source.data-v-1cf27b2a {
+  margin-right: 12px;
+}
+.tags.data-v-1cf27b2a {
+  display: flex;
+  flex-wrap: wrap;
+}
+.tag.data-v-1cf27b2a {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.role-tag.data-v-1cf27b2a {
+  background-color: #DBEAFE;
+  color: #1E40AF;
+}
+.footer-tip.data-v-1cf27b2a {
+  padding: 40px 20px;
+  text-align: center;
+  color: #00D4AA;
+  font-size: 14px;
+}

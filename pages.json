@@ -1,0 +1,153 @@
+{
+    "pages": [
+		
+        {
+            "path": "pages/index/index",
+            "style": {
+                "navigationBarTitleText": "首页",
+                "enablePullDownRefresh": true,
+                "navigationBarBackgroundColor": "#FFFFFF",
+                "navigationBarTextStyle": "black"
+            }
+        },
+        {
+            "path": "pages/discover/discover",
+            "style": {
+                "navigationBarTitleText": "发现",
+                "navigationBarBackgroundColor": "#FFFFFF",
+                "navigationBarTextStyle": "black"
+            }
+        },
+        {
+            "path": "pages/mine/mine",
+            "style": {
+                "navigationBarTitleText": "我的",
+                "navigationBarBackgroundColor": "#FFFFFF",
+                "navigationBarTextStyle": "black"
+            }
+        },
+        {
+            "path": "pages/detail/detail",
+            "style": {
+                "navigationBarTitleText": "详情",
+                "navigationBarBackgroundColor": "#FFFFFF",
+                "navigationBarTextStyle": "black"
+            }
+        },
+        {
+            "path": "pages/role/role",
+            "style": {
+                "navigationBarTitleText": "选择身份",
+                "navigationBarBackgroundColor": "#FFFFFF",
+                "navigationBarTextStyle": "black"
+            }
+        },
+        {
+            "path": "pages/role/role-detail",
+            "style": {
+                "navigationBarTitleText": "完善信息",
+                "navigationBarBackgroundColor": "#FFFFFF",
+                "navigationBarTextStyle": "black"
+            }
+        },
+        {
+            "path": "pages/collection/collection",
+            "style": {
+                "navigationBarTitleText": "我的收藏",
+                "enablePullDownRefresh": true,
+                "navigationBarBackgroundColor": "#FFFFFF",
+                "navigationBarTextStyle": "black"
+            }
+        },
+        {
+            "path": "pages/history/history",
+            "style": {
+                "navigationBarTitleText": "阅读历史",
+                "enablePullDownRefresh": true,
+                "navigationBarBackgroundColor": "#FFFFFF",
+                "navigationBarTextStyle": "black"
+            }
+        },
+        {
+            "path": "pages/message/message",
+            "style": {
+                "navigationBarTitleText": "消息通知",
+                "navigationBarBackgroundColor": "#FFFFFF",
+                "navigationBarTextStyle": "black"
+            }
+        },
+        {
+            "path": "pages/settings/settings",
+            "style": {
+                "navigationBarTitleText": "设置",
+                "navigationBarBackgroundColor": "#FFFFFF",
+                "navigationBarTextStyle": "black"
+            }
+        },
+        {
+            "path": "pages/subscribe/subscribe",
+            "style": {
+                "navigationBarTitleText": "订阅管理",
+                "navigationBarBackgroundColor": "#FFFFFF",
+                "navigationBarTextStyle": "black"
+            }
+        },
+        {
+            "path": "pages/about/about",
+            "style": {
+                "navigationBarTitleText": "关于",
+                "navigationBarBackgroundColor": "#FFFFFF",
+                "navigationBarTextStyle": "black"
+            }
+        },
+        {
+            "path": "pages/login/login",
+            "style": {
+                "navigationBarTitleText": "登录",
+                "navigationStyle": "custom",
+                "backgroundColor": "#F7F9FA"
+            }
+        },
+        {
+            "path": "pages/search/search",
+            "style": {
+                "navigationBarTitleText": "搜索",
+                "navigationBarBackgroundColor": "#FFFFFF",
+                "navigationBarTextStyle": "black"
+            }
+        }
+    ],
+    "tabBar": {
+        "color": "#A0AEC0",
+        "selectedColor": "#0A2540",
+        "backgroundColor": "#FFFFFF",
+        "borderStyle": "white",
+        "list": [
+            {
+                "pagePath": "pages/index/index",
+                "text": "首页",
+                "iconPath": "static/icons/tabbar/home.png",
+                "selectedIconPath": "static/icons/tabbar/home-active.png"
+            },
+            {
+                "pagePath": "pages/discover/discover",
+                "text": "发现",
+                "iconPath": "static/icons/tabbar/discover.png",
+                "selectedIconPath": "static/icons/tabbar/discover-active.png"
+            },
+            {
+                "pagePath": "pages/mine/mine",
+                "text": "我的",
+                "iconPath": "static/icons/tabbar/mine.png",
+                "selectedIconPath": "static/icons/tabbar/mine-active.png"
+            }
+        ]
+    },
+    "globalStyle": {
+        "navigationBarTextStyle": "black",
+        "navigationBarTitleText": "校园信息聚合",
+        "navigationBarBackgroundColor": "#FFFFFF",
+        "backgroundColor": "#F7F9FA"
+    },
+    "uniIdRouter": {}
+}

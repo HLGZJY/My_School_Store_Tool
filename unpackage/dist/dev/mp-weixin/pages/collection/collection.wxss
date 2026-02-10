@@ -1,0 +1,121 @@
+/**
+ * 全局样式变量
+ */
+/* 主题颜色 */
+/* 原有 uni-app 变量 */
+/* 字体大小 */
+/* 边框圆角 */
+/* 间距 */
+.container.data-v-cd17183b {
+  min-height: 100vh;
+  background-color: #F7F9FA;
+}
+.filter-bar.data-v-cd17183b {
+  background-color: #FFFFFF;
+}
+.filter-list.data-v-cd17183b {
+  display: inline-flex;
+  padding: 0 16px;
+}
+.filter-item.data-v-cd17183b {
+  padding: 14px 16px;
+  font-size: 14px;
+  color: #4A5568;
+  position: relative;
+}
+.filter-item.active.data-v-cd17183b {
+  color: #0A2540;
+  font-weight: 600;
+}
+.filter-item.active.data-v-cd17183b::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2px;
+  background-color: #00D4AA;
+}
+.content.data-v-cd17183b {
+  height: calc(100vh - 96px);
+}
+.collection-card.data-v-cd17183b {
+  display: flex;
+  align-items: center;
+  background-color: #FFFFFF;
+  padding: 16px;
+  margin: 8px 16px;
+  border-radius: 8px;
+}
+.article-title.data-v-cd17183b {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0A2540;
+  margin-right: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.article-meta.data-v-cd17183b {
+  display: block;
+  font-size: 12px;
+  color: #A0AEC0;
+}
+.action.data-v-cd17183b {
+  padding-left: 12px;
+}
+.loading-more.data-v-cd17183b,
+.no-more.data-v-cd17183b {
+  padding: 20px;
+  text-align: center;
+  color: #A0AEC0;
+  font-size: 14px;
+}
+.empty.data-v-cd17183b {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+.empty-text.data-v-cd17183b {
+  font-size: 16px;
+  color: #4A5568;
+  margin-bottom: 8px;
+}
+.empty-tip.data-v-cd17183b {
+  font-size: 14px;
+  color: #A0AEC0;
+}
+.bottom-bar.data-v-cd17183b {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background-color: #FFFFFF;
+  box-shadow: 0 -2px 8px rgba(10, 37, 64, 0.04);
+}
+.select-info.data-v-cd17183b {
+  font-size: 14px;
+  color: #4A5568;
+}
+.cancel-btn.data-v-cd17183b {
+  padding: 8px 16px;
+  font-size: 14px;
+  color: #4A5568;
+}
+.delete-btn.data-v-cd17183b {
+  padding: 8px 16px;
+  background-color: #EF4444;
+  color: #FFFFFF;
+  border-radius: 8px;
+  font-size: 14px;
+}

@@ -1,0 +1,58 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/discover/discover",
+    "pages/mine/mine",
+    "pages/detail/detail",
+    "pages/role/role",
+    "pages/role/role-detail",
+    "pages/collection/collection",
+    "pages/history/history",
+    "pages/message/message",
+    "pages/settings/settings",
+    "pages/subscribe/subscribe",
+    "pages/about/about",
+    "pages/login/login",
+    "pages/search/search"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "校园信息聚合",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "backgroundColor": "#F7F9FA"
+  },
+  "tabBar": {
+    "color": "#A0AEC0",
+    "selectedColor": "#0A2540",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "static/icons/tabbar/home.png",
+        "selectedIconPath": "static/icons/tabbar/home-active.png"
+      },
+      {
+        "pagePath": "pages/discover/discover",
+        "text": "发现",
+        "iconPath": "static/icons/tabbar/discover.png",
+        "selectedIconPath": "static/icons/tabbar/discover-active.png"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的",
+        "iconPath": "static/icons/tabbar/mine.png",
+        "selectedIconPath": "static/icons/tabbar/mine-active.png"
+      }
+    ]
+  },
+  "appsecret": "1efd7d7a175d83ec611cac4758db9f51",
+  "oauth": {
+    "weixin": {
+      "appid": "wx21bdaa579562ec11",
+      "appsecret": "1efd7d7a175d83ec611cac4758db9f51"
+    }
+  },
+  "usingComponents": {}
+}

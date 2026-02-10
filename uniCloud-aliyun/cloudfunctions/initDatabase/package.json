@@ -1,0 +1,10 @@
+{
+  "name": "initDatabase",
+  "version": "1.0.0",
+  "description": "数据库初始化（登录功能）",
+  "main": "index.js",
+  "dependencies": {},
+  "permissions": {
+    "uniCloud": true
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "setUserRole",
+  "version": "1.0.0",
+  "description": "设置用户角色",
+  "main": "index.js",
+  "dependencies": {}
+}

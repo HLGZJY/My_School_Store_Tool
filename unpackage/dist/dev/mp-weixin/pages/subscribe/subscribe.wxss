@@ -1,0 +1,66 @@
+/**
+ * 全局样式变量
+ */
+/* 主题颜色 */
+/* 原有 uni-app 变量 */
+/* 字体大小 */
+/* 边框圆角 */
+/* 间距 */
+.container.data-v-b281fdea {
+  min-height: 100vh;
+  background-color: #F7F9FA;
+}
+.section.data-v-b281fdea {
+  margin-top: 16px;
+  background-color: #FFFFFF;
+}
+.section-title.data-v-b281fdea {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0A2540;
+  padding: 20px 20px 12px;
+}
+.source-card.data-v-b281fdea {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #E8ECF1;
+}
+.source-card.data-v-b281fdea:last-child {
+  border-bottom: none;
+}
+.source-info.data-v-b281fdea {
+  flex: 1;
+}
+.source-info .source-name.data-v-b281fdea {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0A2540;
+  margin-bottom: 4px;
+}
+.source-info .source-desc.data-v-b281fdea {
+  display: block;
+  font-size: 12px;
+  color: #A0AEC0;
+}
+.subscribe-btn.data-v-b281fdea {
+  padding: 8px 20px;
+  background-color: #00D4AA;
+  color: #0A2540;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.subscribe-btn.subscribed.data-v-b281fdea {
+  background-color: #E8ECF1;
+  color: #4A5568;
+}
+.empty-tip.data-v-b281fdea {
+  padding: 40px 20px;
+  text-align: center;
+  font-size: 14px;
+  color: #A0AEC0;
+}

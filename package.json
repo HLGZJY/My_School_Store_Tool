@@ -1,0 +1,29 @@
+{
+    "name": "my-school-store-tool",
+    "version": "1.0.0",
+    "description": "校园信息聚合小程序",
+    "main": "main.js",
+    "scripts": {
+        "serve": "npm run dev:h5",
+        "build": "npm run build:h5"
+    },
+    "dependencies": {
+        "@dcloudio/uni-ui": "^1.5.0",
+        "vue": "^3.4.0",
+        "vuex": "^4.1.0",
+        "pinia": "^2.1.0"
+    },
+    "devDependencies": {
+        "@dcloudio/types": "^3.4.0",
+        "@types/node": "^20.0.0",
+        "sass": "^1.69.0",
+        "sass-loader": "^13.3.0"
+    },
+    "keywords": [
+        "uniapp",
+        "小程序",
+        "校园信息"
+    ],
+    "author": "Your Name",
+    "license": "MIT"
+}

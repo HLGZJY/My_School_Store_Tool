@@ -1,0 +1,89 @@
+/**
+ * 全局样式变量
+ */
+/* 主题颜色 */
+/* 原有 uni-app 变量 */
+/* 字体大小 */
+/* 边框圆角 */
+/* 间距 */
+.container.data-v-e4e4508d {
+  min-height: 100vh;
+  background-color: #F7F9FA;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.login-section.data-v-e4e4508d {
+  width: 100%;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.logo.data-v-e4e4508d {
+  width: 120px;
+  height: 120px;
+  border-radius: 24px;
+  margin-bottom: 24px;
+}
+.app-name.data-v-e4e4508d {
+  font-size: 24px;
+  font-weight: 600;
+  color: #0A2540;
+  margin-bottom: 8px;
+}
+.welcome-text.data-v-e4e4508d {
+  font-size: 16px;
+  color: #A0AEC0;
+  margin-bottom: 60px;
+}
+.login-btn.data-v-e4e4508d {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 48px;
+  background-color: #07C160;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+.login-btn.data-v-e4e4508d::after {
+  border: none;
+}
+.login-btn text.data-v-e4e4508d {
+  margin-left: 8px;
+}
+.tips.data-v-e4e4508d {
+  font-size: 12px;
+  color: #A0AEC0;
+}
+.tips .link.data-v-e4e4508d {
+  color: #00D4AA;
+}
+.content.data-v-e4e4508d {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6rpx;
+}
+.logo.data-v-e4e4508d {
+  height: 200rpx;
+  width: 200rpx;
+  margin-top: 200rpx;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 50rpx;
+}
+.text-area.data-v-e4e4508d {
+  display: flex;
+  justify-content: center;
+}
+.title.data-v-e4e4508d {
+  font-size: 18px;
+  color: #8f8f94;
+}

@@ -1,0 +1,86 @@
+/**
+ * 全局样式变量
+ */
+/* 主题颜色 */
+/* 原有 uni-app 变量 */
+/* 字体大小 */
+/* 边框圆角 */
+/* 间距 */
+.container.data-v-4c1b26cf {
+  min-height: 100vh;
+  background-color: #F7F9FA;
+}
+.header.data-v-4c1b26cf {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background-color: #FFFFFF;
+}
+.title.data-v-4c1b26cf {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0A2540;
+}
+.mark-read.data-v-4c1b26cf {
+  padding: 6px 12px;
+  background-color: #F7F9FA;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #4A5568;
+}
+.content.data-v-4c1b26cf {
+  height: calc(100vh - 68px);
+}
+.message-card.data-v-4c1b26cf {
+  background-color: #FFFFFF;
+  padding: 16px;
+  margin: 8px 16px;
+  border-radius: 8px;
+}
+.message-card.unread.data-v-4c1b26cf {
+  background-color: #F0FDFA;
+  border-left: 3px solid #00D4AA;
+}
+.message-card.data-v-4c1b26cf:active {
+  background-color: #F7F9FA;
+}
+.message-header.data-v-4c1b26cf {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.message-title.data-v-4c1b26cf {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0A2540;
+}
+.message-time.data-v-4c1b26cf {
+  font-size: 12px;
+  color: #A0AEC0;
+}
+.message-content.data-v-4c1b26cf {
+  display: block;
+  font-size: 14px;
+  color: #4A5568;
+  line-height: 1.6;
+}
+.loading-more.data-v-4c1b26cf,
+.no-more.data-v-4c1b26cf {
+  padding: 20px;
+  text-align: center;
+  color: #A0AEC0;
+  font-size: 14px;
+}
+.empty.data-v-4c1b26cf {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+.empty-text.data-v-4c1b26cf {
+  font-size: 16px;
+  color: #4A5568;
+}
