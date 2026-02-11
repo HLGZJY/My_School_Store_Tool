@@ -1,0 +1,98 @@
+{
+	"bsonType": "object",
+	"description": "文章表 - 存储校园资讯、通知公告等",
+	"required": ["title", "sourceName", "category", "publishTime"],
+	"permission": {
+		"read": true,
+		"create": false,
+		"update": false,
+		"delete": false,
+		"count": true
+	},
+	"properties": {
+		"_id": {
+			"description": "文章ID，系统自动生成"
+		},
+		"title": {
+			"bsonType": "string",
+			"description": "文章标题",
+			"maxLength": 200
+		},
+		"summary": {
+			"bsonType": "string",
+			"description": "文章摘要/AI生成"
+		},
+		"content": {
+			"bsonType": "string",
+			"description": "文章正文内容"
+		},
+		"sourceName": {
+			"bsonType": "string",
+			"description": "来源名称，如教务处、图书馆"
+		},
+		"sourceId": {
+			"bsonType": "string",
+			"description": "来源标识"
+		},
+		"category": {
+			"bsonType": "string",
+			"description": "一级分类：notice/academic/activity/service"
+		},
+		"categoryName": {
+			"bsonType": "string",
+			"description": "分类显示名称"
+		},
+		"tags": {
+			"bsonType": "object",
+			"description": "标签信息",
+			"properties": {
+				"role": {
+					"bsonType": "array",
+					"description": "角色标签"
+				},
+				"urgency": {
+					"bsonType": "array",
+					"description": "紧急程度标签"
+				}
+			}
+		},
+		"urgency": {
+			"bsonType": "string",
+			"description": "紧急程度：high/medium/low"
+		},
+		"publishTime": {
+			"bsonType": "number",
+			"description": "发布时间，时间戳"
+		},
+		"stats": {
+			"bsonType": "object",
+			"description": "统计数据",
+			"properties": {
+				"viewCount": {
+					"bsonType": "number",
+					"description": "浏览次数"
+				},
+				"collectCount": {
+					"bsonType": "number",
+					"description": "收藏次数"
+				}
+			}
+		},
+		"originalUrl": {
+			"bsonType": "string",
+			"description": "原文链接"
+		},
+		"status": {
+			"bsonType": "string",
+			"description": "状态：published/draft/archived"
+		},
+		"createdAt": {
+			"bsonType": "number",
+			"description": "创建时间"
+		},
+		"updatedAt": {
+			"bsonType": "number",
+			"description": "更新时间"
+		}
+	}
+}

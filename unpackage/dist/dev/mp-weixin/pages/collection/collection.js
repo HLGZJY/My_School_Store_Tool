@@ -30,6 +30,13 @@ const _sfc_main = {
   },
   onLoad() {
     this.loadCollections();
+    common_vendor.index.$on("collectChange", this.onCollectChange);
+  },
+  onShow() {
+    this.loadCollections(true);
+  },
+  onUnload() {
+    common_vendor.index.$off("collectChange", this.onCollectChange);
   },
   onPullDownRefresh() {
     this.page = 1;
@@ -42,12 +49,12 @@ const _sfc_main = {
         return;
       this.loading = true;
       try {
-        const userId = this.$store.state.user.userId;
+        const openid = common_vendor.index.getStorageSync("userId");
         const category = this.categories[this.currentCategory].category;
         const res = await common_vendor.Vs.callFunction({
           name: "getCollections",
           data: {
-            userId,
+            userId: openid,
             category,
             page: this.page,
             pageSize: 20
@@ -111,10 +118,11 @@ const _sfc_main = {
           if (res.confirm) {
             common_vendor.index.showLoading({ title: "删除中..." });
             try {
+              const openid = common_vendor.index.getStorageSync("userId");
               const res2 = await common_vendor.Vs.callFunction({
                 name: "batchUncollect",
                 data: {
-                  userId: this.$store.state.user.userId,
+                  userId: openid,
                   articleIds: this.selectedIds
                 }
               });
@@ -149,6 +157,14 @@ const _sfc_main = {
     formatTime(timestamp) {
       const date = new Date(timestamp);
       return `${date.getMonth() + 1}月${date.getDate()}日`;
+    },
+    onCollectChange({ articleId, collected }) {
+      if (!collected) {
+        const index = this.collections.findIndex((c) => c.articleId === articleId);
+        if (index >= 0) {
+          this.collections.splice(index, 1);
+        }
+      }
     }
   }
 };
@@ -170,10 +186,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     b: $data.collections.length > 0
   }, $data.collections.length > 0 ? common_vendor.e({
     c: common_vendor.f($data.collections, (item, k0, i0) => {
+      var _a, _b;
       return {
-        a: common_vendor.t(item.article.title),
-        b: common_vendor.t(item.article.sourceName),
-        c: common_vendor.t($options.formatTime(item.createTime)),
+        a: common_vendor.t(((_a = item.article) == null ? void 0 : _a.title) || "未知标题"),
+        b: common_vendor.t(((_b = item.article) == null ? void 0 : _b.sourceName) || "未知来源"),
+        c: common_vendor.t($options.formatTime(item.collectTime)),
         d: "cd17183b-0-" + i0,
         e: common_vendor.p({
           type: item.selected ? "checkbox-filled" : "circle",

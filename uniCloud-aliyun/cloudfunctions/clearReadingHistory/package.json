@@ -1,0 +1,8 @@
+{
+    "name": "clearReadingHistory",
+    "version": "1.0.0",
+    "description": "清空阅读历史",
+    "main": "index.js",
+    "dependencies": {},
+    "extensions": {}
+}

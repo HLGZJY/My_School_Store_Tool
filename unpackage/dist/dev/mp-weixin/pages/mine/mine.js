@@ -1,167 +1,105 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const UserCard = () => "./components/UserCard.js";
+const StatsCard = () => "./components/StatsCard.js";
+const MenuList = () => "./components/MenuList.js";
+const PAGE_MAP = {
+  collect: "/pages/collection/collection",
+  read: "/pages/history/history",
+  subscribe: "/pages/subscribe/subscribe",
+  message: "/pages/message/message",
+  settings: "/pages/settings/settings"
+};
 const _sfc_main = {
-  data() {
-    return {
-      userInfo: {},
-      stats: {
-        collectCount: 0,
-        readCount: 0
-      },
-      unreadCount: 0
-    };
-  },
+  name: "Mine",
+  components: { UserCard, StatsCard, MenuList },
+  data: () => ({
+    userInfo: {},
+    stats: { collectCount: 0, readCount: 0 },
+    unreadCount: 0
+  }),
   onLoad() {
-    this.loadUserInfo();
-    this.loadStats();
-    this.loadUnreadCount();
+    this.loadData();
+    common_vendor.index.$on("collectChange", this.refreshStats);
+  },
+  onUnload() {
+    common_vendor.index.$off("collectChange", this.refreshStats);
   },
   onShow() {
-    this.loadUnreadCount();
+    this.loadUnread();
+    this.loadData();
   },
   methods: {
-    async loadUserInfo() {
+    async loadData() {
+      const openid = this.$store.state.user.userId || common_vendor.index.getStorageSync("userId");
+      if (!openid)
+        return;
       try {
-        const userId = this.$store.state.user.userId;
-        if (!userId)
-          return;
         const res = await common_vendor.Vs.callFunction({
           name: "getUserInfo",
-          data: { userId }
+          data: { userId: openid }
         });
         if (res.result.code === 0) {
           this.userInfo = res.result.data;
+          this.stats = res.result.data.stats || {};
         }
-      } catch (error) {
-        console.error("加载用户信息失败:", error);
+      } catch (e) {
+        console.error("加载用户信息失败:", e);
       }
     },
-    async loadStats() {
+    async loadUnread() {
+      const openid = this.$store.state.user.userId || common_vendor.index.getStorageSync("userId");
+      if (!openid)
+        return;
       try {
-        const userId = this.$store.state.user.userId;
-        if (!userId)
-          return;
-        const res = await common_vendor.Vs.callFunction({
-          name: "getUserInfo",
-          data: { userId }
-        });
-        if (res.result.code === 0) {
-          this.stats = res.result.data.stats;
-        }
-      } catch (error) {
-        console.error("加载统计信息失败:", error);
-      }
-    },
-    async loadUnreadCount() {
-      try {
-        const userId = this.$store.state.user.userId;
-        if (!userId)
-          return;
         const res = await common_vendor.Vs.callFunction({
           name: "getMessages",
-          data: {
-            userId,
-            type: "unread",
-            page: 1,
-            pageSize: 1
-          }
+          data: { userId: openid, type: "unread" }
         });
         if (res.result.code === 0) {
           this.unreadCount = res.result.data.unreadCount || 0;
         }
-      } catch (error) {
-        console.error("加载未读消息数失败:", error);
+      } catch (e) {
+        console.error("加载未读消息数失败:", e);
       }
     },
-    getRoleName(role) {
-      const roleMap = {
-        "student": "学生",
-        "teacher": "教师",
-        "admin": "行政人员"
-      };
-      return roleMap[role] || "";
+    goToPage(name) {
+      const url = PAGE_MAP[name];
+      if (url)
+        common_vendor.index.navigateTo({ url });
     },
-    goToCollection() {
-      common_vendor.index.navigateTo({
-        url: "/pages/collection/collection"
-      });
+    goToRole() {
+      common_vendor.index.navigateTo({ url: "/pages/role/role" });
     },
-    goToHistory() {
-      common_vendor.index.navigateTo({
-        url: "/pages/history/history"
-      });
-    },
-    goToSubscribe() {
-      common_vendor.index.navigateTo({
-        url: "/pages/subscribe/subscribe"
-      });
-    },
-    goToMessage() {
-      common_vendor.index.navigateTo({
-        url: "/pages/message/message"
-      });
-    },
-    goToSettings() {
-      common_vendor.index.navigateTo({
-        url: "/pages/settings/settings"
-      });
+    refreshStats() {
+      this.loadData();
     }
   }
 };
 if (!Array) {
-  const _component_uni_icons = common_vendor.resolveComponent("uni-icons");
-  _component_uni_icons();
+  const _component_UserCard = common_vendor.resolveComponent("UserCard");
+  const _component_StatsCard = common_vendor.resolveComponent("StatsCard");
+  const _component_MenuList = common_vendor.resolveComponent("MenuList");
+  (_component_UserCard + _component_StatsCard + _component_MenuList)();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
-  return common_vendor.e({
-    a: $data.userInfo.avatar || "/static/logo.png",
-    b: common_vendor.t($data.userInfo.nickname || "未登录"),
-    c: $data.userInfo.role
-  }, $data.userInfo.role ? {
-    d: common_vendor.t($options.getRoleName($data.userInfo.role))
-  } : {}, {
-    e: common_vendor.t($data.stats.collectCount || 0),
-    f: common_vendor.o((...args) => $options.goToCollection && $options.goToCollection(...args)),
-    g: common_vendor.t($data.stats.readCount || 0),
-    h: common_vendor.o((...args) => $options.goToHistory && $options.goToHistory(...args)),
-    i: common_vendor.p({
-      type: "notification",
-      size: "20",
-      color: "#00D4AA"
+  return {
+    a: common_vendor.o($options.goToRole),
+    b: common_vendor.p({
+      avatar: _ctx.userInfo.avatar,
+      nickname: _ctx.userInfo.nickname || "未登录",
+      role: _ctx.userInfo.role
     }),
-    j: common_vendor.p({
-      type: "arrowright",
-      size: "16",
-      color: "#A0AEC0"
+    c: common_vendor.o($options.goToPage),
+    d: common_vendor.p({
+      collectCount: _ctx.stats.collectCount,
+      readCount: _ctx.stats.readCount
     }),
-    k: common_vendor.o((...args) => $options.goToSubscribe && $options.goToSubscribe(...args)),
-    l: common_vendor.p({
-      type: "email",
-      size: "20",
-      color: "#00D4AA"
-    }),
-    m: $data.unreadCount > 0
-  }, $data.unreadCount > 0 ? {
-    n: common_vendor.t($data.unreadCount)
-  } : {}, {
-    o: common_vendor.p({
-      type: "arrowright",
-      size: "16",
-      color: "#A0AEC0"
-    }),
-    p: common_vendor.o((...args) => $options.goToMessage && $options.goToMessage(...args)),
-    q: common_vendor.p({
-      type: "gear",
-      size: "20",
-      color: "#00D4AA"
-    }),
-    r: common_vendor.p({
-      type: "arrowright",
-      size: "16",
-      color: "#A0AEC0"
-    }),
-    s: common_vendor.o((...args) => $options.goToSettings && $options.goToSettings(...args))
-  });
+    e: common_vendor.o($options.goToPage),
+    f: common_vendor.p({
+      unreadCount: _ctx.unreadCount
+    })
+  };
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-7c2ebfa5"]]);
 wx.createPage(MiniProgramPage);

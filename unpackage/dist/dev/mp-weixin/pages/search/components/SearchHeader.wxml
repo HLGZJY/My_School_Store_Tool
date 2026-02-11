@@ -1,0 +1,1 @@
+<view class="search-bar data-v-c7ad7d98"><uni-icons wx:if="{{b}}" class="data-v-c7ad7d98" bindclick="{{a}}" u-i="c7ad7d98-0" bind:__l="__l" u-p="{{b}}"></uni-icons><input value="{{c}}" class="search-input data-v-c7ad7d98" placeholder="搜索通知、讲座、活动..." focus="{{d}}" bindconfirm="{{e}}" bindinput="{{f}}"/><view class="search-btn data-v-c7ad7d98" bindtap="{{g}}">搜索</view></view>

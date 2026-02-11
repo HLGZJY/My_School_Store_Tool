@@ -1,0 +1,39 @@
+{
+	"bsonType": "object",
+	"description": "收藏表 - 用户收藏的文章",
+	"required": ["userId", "articleId", "collectTime"],
+	"permission": {
+		"read": "doc.userId == auth.userId",
+		"create": "doc.userId == auth.userId",
+		"update": false,
+		"delete": "doc.userId == auth.userId",
+		"count": "doc.userId == auth.userId"
+	},
+	"properties": {
+		"_id": {
+			"description": "收藏记录ID"
+		},
+		"userId": {
+			"bsonType": "string",
+			"description": "用户ID"
+		},
+		"articleId": {
+			"bsonType": "string",
+			"description": "文章ID"
+		},
+		"article": {
+			"bsonType": "object",
+			"description": "文章快照（冗余存储便于快速展示）",
+			"properties": {
+				"title": { "bsonType": "string", "description": "标题" },
+				"sourceName": { "bsonType": "string", "description": "来源" },
+				"publishTime": { "bsonType": "number", "description": "发布时间" },
+				"category": { "bsonType": "string", "description": "分类" }
+			}
+		},
+		"collectTime": {
+			"bsonType": "number",
+			"description": "收藏时间"
+		}
+	}
+}

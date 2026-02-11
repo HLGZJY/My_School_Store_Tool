@@ -1,0 +1,32 @@
+/**
+ * 全局样式变量
+ */
+/* 主题颜色 */
+/* 原有 uni-app 变量 */
+/* 字体大小 */
+/* 边框圆角 */
+/* 间距 */
+.stats-card.data-v-32d9cf9b {
+  display: flex;
+  background-color: #FFFFFF;
+  padding: 20px 0;
+}
+.stats-card .stat-item.data-v-32d9cf9b {
+  flex: 1;
+  text-align: center;
+}
+.stats-card .stat-item .value.data-v-32d9cf9b {
+  display: block;
+  font-size: 24px;
+  font-weight: 600;
+  color: #0A2540;
+  margin-bottom: 4px;
+}
+.stats-card .stat-item .label.data-v-32d9cf9b {
+  font-size: 13px;
+  color: #A0AEC0;
+}
+.stats-card .divider.data-v-32d9cf9b {
+  width: 1px;
+  background-color: #E8ECF1;
+}

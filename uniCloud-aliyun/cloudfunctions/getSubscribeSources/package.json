@@ -1,0 +1,8 @@
+{
+    "name": "getSubscribeSources",
+    "version": "1.0.0",
+    "description": "获取用户订阅的数据源",
+    "main": "index.js",
+    "dependencies": {},
+    "extensions": {}
+}

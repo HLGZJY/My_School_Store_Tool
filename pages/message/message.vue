@@ -67,12 +67,12 @@ export default {
             this.loading = true
 
             try {
-                const userId = this.$store.state.user.userId
+                const openid = uni.getStorageSync('userId')
 
                 const res = await uniCloud.callFunction({
                     name: 'getMessages',
                     data: {
-                        userId,
+                        userId: openid,
                         type: 'all',
                         page: this.page,
                         pageSize: 20
@@ -131,10 +131,11 @@ export default {
 
         async markAsRead(messageId) {
             try {
+                const openid = uni.getStorageSync('userId')
                 await uniCloud.callFunction({
                     name: 'markMessageRead',
                     data: {
-                        userId: this.$store.state.user.userId,
+                        userId: openid,
                         messageId
                     }
                 })
@@ -150,10 +151,11 @@ export default {
                 success: async (res) => {
                     if (res.confirm) {
                         try {
+                            const openid = uni.getStorageSync('userId')
                             await uniCloud.callFunction({
                                 name: 'markMessageRead',
                                 data: {
-                                    userId: this.$store.state.user.userId,
+                                    userId: openid,
                                     all: true
                                 }
                             })

@@ -80,23 +80,27 @@ export default {
         this.loadArticleDetail()
         this.loadCollectStatus()
         this.recordRead()
+
+        // 监听收藏状态变化
+        uni.$on('collectChange', this.onCollectChange)
+    },
+    onUnload() {
+        uni.$off('collectChange', this.onCollectChange)
     },
     methods: {
         async loadArticleDetail() {
             try {
-                const userId = this.$store.state.user.userId
-
                 const res = await uniCloud.callFunction({
                     name: 'getArticleDetail',
                     data: {
-                        articleId: this.articleId,
-                        userId
+                        articleId: this.articleId
                     }
                 })
 
                 if (res.result.code === 0) {
                     this.article = res.result.data
                     this.relatedArticles = res.result.data.relatedArticles || []
+                    console.log('文章详情加载成功:', this.article._id)
                 }
             } catch (error) {
                 console.error('加载文章详情失败:', error)
@@ -109,13 +113,17 @@ export default {
 
         async loadCollectStatus() {
             try {
-                const userId = this.$store.state.user.userId
-                if (!userId) return
+                // 方案A：获取 openid（从 store 或本地存储）
+                const openid = this.$store.state.user.userId || uni.getStorageSync('userId')
+                if (!openid) {
+                    console.log('loadCollectStatus: 未登录，不检查收藏状态')
+                    return
+                }
 
                 const res = await uniCloud.callFunction({
                     name: 'getCollections',
                     data: {
-                        userId,
+                        userId: openid,  // 方案A：传递 openid
                         articleId: this.articleId,
                         pageSize: 1
                     }
@@ -131,14 +139,14 @@ export default {
 
         async recordRead() {
             try {
-                const userId = this.$store.state.user.userId
-                if (!userId) return
+                // 方案A：直接传递 openid（后续应优化为获取用户文档ID）
+                const openid = this.$store.state.user.userId
 
                 // 异步记录阅读，不阻塞页面
                 uniCloud.callFunction({
                     name: 'recordRead',
                     data: {
-                        userId,
+                        userId: openid || 'anonymous',
                         articleId: this.articleId,
                         duration: 0
                     }
@@ -149,8 +157,9 @@ export default {
         },
 
         async toggleCollect() {
-            const userId = this.$store.state.user.userId
-            if (!userId) {
+            // 方案A：获取 openid（从 store 或本地存储）
+            const openid = this.$store.state.user.userId || uni.getStorageSync('userId')
+            if (!openid) {
                 uni.showToast({
                     title: '请先登录',
                     icon: 'none'
@@ -162,17 +171,25 @@ export default {
                 const res = await uniCloud.callFunction({
                     name: 'collectArticle',
                     data: {
-                        userId,
+                        userId: openid,  // 方案A：传递 openid
                         articleId: this.articleId,
                         action: this.isCollected ? 'uncollect' : 'collect'
                     }
                 })
 
+                console.log('收藏响应:', res.result)
                 if (res.result.code === 0) {
                     this.isCollected = !this.isCollected
+                    // 发出事件，通知其他页面刷新
+                    uni.$emit('collectChange', { articleId: this.articleId, collected: this.isCollected })
                     uni.showToast({
                         title: this.isCollected ? '收藏成功' : '取消收藏',
                         icon: 'success'
+                    })
+                } else {
+                    uni.showToast({
+                        title: res.result.message || '操作失败',
+                        icon: 'none'
                     })
                 }
             } catch (error) {
@@ -221,6 +238,12 @@ export default {
 
         goBack() {
             uni.navigateBack()
+        },
+
+        onCollectChange({ articleId, collected }) {
+            if (articleId === this.articleId) {
+                this.isCollected = collected
+            }
         },
 
         goToArticle(id) {

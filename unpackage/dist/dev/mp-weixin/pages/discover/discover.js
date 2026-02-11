@@ -1,37 +1,54 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const HotRanking = () => "./components/HotRanking.js";
+const TagCloud = () => "./components/TagCloud.js";
+const Timeline = () => "./components/Timeline.js";
+const SubscribeManager = () => "./components/SubscribeManager.js";
 const _sfc_main = {
+  name: "Discover",
+  components: {
+    HotRanking,
+    TagCloud,
+    Timeline,
+    SubscribeManager
+  },
   data() {
     return {
       ranking: [],
       tags: [],
       timeline: [],
-      expandedTimeline: null
+      subscribed: [],
+      recommended: []
     };
   },
   onLoad() {
     this.loadHotRanking();
     this.loadTagCloud();
     this.loadTimeline();
+    this.loadSubscriptions();
   },
   methods: {
+    // 加载热门排行
     async loadHotRanking() {
       try {
         const res = await common_vendor.Vs.callFunction({
-          name: "getHotRanking",
+          name: "getHotArticles",
           data: {
-            type: "view",
             days: 7,
             limit: 5
           }
         });
         if (res.result.code === 0) {
-          this.ranking = res.result.data.ranking || [];
+          console.log("热门排行数据:", res.result.data);
+          this.ranking = res.result.data || [];
+        } else {
+          console.error("热门排行错误:", res.result.message);
         }
       } catch (error) {
         console.error("加载热门排行失败:", error);
       }
     },
+    // 加载标签云
     async loadTagCloud() {
       try {
         const res = await common_vendor.Vs.callFunction({
@@ -41,58 +58,37 @@ const _sfc_main = {
           }
         });
         if (res.result.code === 0) {
-          this.tags = res.result.data.tags || [];
+          console.log("标签云数据:", res.result.data);
+          this.tags = res.result.data || [];
+        } else {
+          console.error("标签云错误:", res.result.message);
         }
       } catch (error) {
         console.error("加载标签云失败:", error);
       }
     },
+    // 加载时间轴
     async loadTimeline() {
       try {
-        const userId = this.$store.state.user.userId;
         const res = await common_vendor.Vs.callFunction({
-          name: "getTimeline",
-          data: {
-            userId
-          }
+          name: "getTimeline"
         });
         if (res.result.code === 0) {
-          this.timeline = res.result.data.timeline || [];
+          console.log("时间轴数据:", res.result.data);
+          this.timeline = res.result.data || [];
+        } else {
+          console.error("时间轴错误:", res.result.message);
         }
       } catch (error) {
         console.error("加载时间轴失败:", error);
       }
     },
-    getTagSize(count) {
-      const minCount = Math.min(...this.tags.map((t) => t.count));
-      const maxCount = Math.max(...this.tags.map((t) => t.count));
-      const ratio = (count - minCount) / (maxCount - minCount);
-      const minSize = 14;
-      const maxSize = 18;
-      return minSize + ratio * (maxSize - minSize) + "px";
-    },
-    toggleTimeline(item) {
-      if (this.expandedTimeline && this.expandedTimeline.timestamp === item.timestamp) {
-        item.expanded = !item.expanded;
-        if (!item.expanded) {
-          this.expandedTimeline = null;
-        }
-      } else {
-        if (this.expandedTimeline) {
-          this.expandedTimeline.expanded = false;
-        }
-        item.expanded = true;
-        this.expandedTimeline = item;
-        this.loadTimelineArticles(item);
-      }
-    },
+    // 加载时间轴文章
     async loadTimelineArticles(timelineItem) {
       try {
-        const userId = this.$store.state.user.userId;
         const res = await common_vendor.Vs.callFunction({
           name: "getArticles",
           data: {
-            userId,
             page: 1,
             pageSize: 50,
             startDate: timelineItem.timestamp,
@@ -100,84 +96,123 @@ const _sfc_main = {
           }
         });
         if (res.result.code === 0) {
-          timelineItem.articles = res.result.data.articles || [];
+          const articles = res.result.data.articles || [];
+          const index = this.timeline.findIndex((t) => t.timestamp === timelineItem.timestamp);
+          if (index >= 0) {
+            this.timeline[index].articles = articles;
+          }
         }
       } catch (error) {
         console.error("加载时间轴文章失败:", error);
       }
     },
-    searchTag(tag) {
+    // 加载订阅列表
+    loadSubscriptions() {
+      const allSources = [
+        { id: "jwc", name: "教务处", type: "official" },
+        { id: "library", name: "图书馆", type: "official" },
+        { id: "xsc", name: "学生处", type: "official" },
+        { id: "cs", name: "计算机学院", type: "college" },
+        { id: "jyzd", name: "就业指导中心", type: "official" }
+      ];
+      const subscriptions = common_vendor.index.getStorageSync("subscriptions") || [];
+      this.subscribed = allSources.filter(
+        (s) => subscriptions.some((sub) => sub.id === s.id)
+      );
+      this.recommended = allSources.filter(
+        (s) => !subscriptions.some((sub) => sub.id === s.id)
+      );
+    },
+    // 搜索标签
+    searchTag(tagName) {
       common_vendor.index.navigateTo({
-        url: `/pages/search/search?keyword=${tag}`
+        url: `/pages/search/search?keyword=${tagName}`
       });
     },
+    // 查看更多排行
     viewMoreRanking() {
       common_vendor.index.showToast({
         title: "功能开发中",
         icon: "none"
       });
     },
+    // 查看更多订阅
+    viewMoreSubscribe() {
+      common_vendor.index.navigateTo({
+        url: "/pages/subscribe/subscribe"
+      });
+    },
+    // 订阅
+    handleSubscribe(item) {
+      const subscriptions = common_vendor.index.getStorageSync("subscriptions") || [];
+      subscriptions.push({
+        id: item.id,
+        name: item.name,
+        subscribeTime: Date.now()
+      });
+      common_vendor.index.setStorageSync("subscriptions", subscriptions);
+      this.subscribed.push(item);
+      this.recommended = this.recommended.filter((r) => r.id !== item.id);
+      common_vendor.index.showToast({
+        title: "订阅成功",
+        icon: "success"
+      });
+    },
+    // 取消订阅
+    handleUnsubscribe(item) {
+      const subscriptions = common_vendor.index.getStorageSync("subscriptions") || [];
+      const index = subscriptions.findIndex((s) => s.id === item.id);
+      if (index >= 0) {
+        subscriptions.splice(index, 1);
+      }
+      common_vendor.index.setStorageSync("subscriptions", subscriptions);
+      this.recommended.push(item);
+      this.subscribed = this.subscribed.filter((s) => s.id !== item.id);
+      common_vendor.index.showToast({
+        title: "已取消订阅",
+        icon: "none"
+      });
+    },
+    // 跳转详情
     goToDetail(id) {
       common_vendor.index.navigateTo({
         url: `/pages/detail/detail?id=${id}`
       });
-    },
-    formatTime(timestamp) {
-      const date = new Date(timestamp);
-      return `${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")}`;
     }
   }
 };
 if (!Array) {
-  const _component_uni_icons = common_vendor.resolveComponent("uni-icons");
-  _component_uni_icons();
+  const _component_HotRanking = common_vendor.resolveComponent("HotRanking");
+  const _component_TagCloud = common_vendor.resolveComponent("TagCloud");
+  const _component_Timeline = common_vendor.resolveComponent("Timeline");
+  const _component_SubscribeManager = common_vendor.resolveComponent("SubscribeManager");
+  (_component_HotRanking + _component_TagCloud + _component_Timeline + _component_SubscribeManager)();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
-  return common_vendor.e({
-    a: common_vendor.o((...args) => $options.viewMoreRanking && $options.viewMoreRanking(...args)),
-    b: common_vendor.f($data.ranking, (item, index, i0) => {
-      return {
-        a: common_vendor.t(index + 1),
-        b: common_vendor.n("rank-" + (index + 1)),
-        c: common_vendor.t(item.title),
-        d: common_vendor.t(item.count),
-        e: item._id,
-        f: common_vendor.o(($event) => $options.goToDetail(item._id), item._id)
-      };
+  return {
+    a: common_vendor.o($options.viewMoreRanking),
+    b: common_vendor.o($options.goToDetail),
+    c: common_vendor.p({
+      ranking: $data.ranking
     }),
-    c: common_vendor.f($data.tags, (tag, k0, i0) => {
-      return {
-        a: common_vendor.t(tag.name),
-        b: tag.name,
-        c: $options.getTagSize(tag.count),
-        d: common_vendor.o(($event) => $options.searchTag(tag.name), tag.name)
-      };
+    d: common_vendor.o($options.searchTag),
+    e: common_vendor.p({
+      tags: $data.tags
     }),
-    d: common_vendor.f($data.timeline, (item, k0, i0) => {
-      return {
-        a: common_vendor.t(item.date),
-        b: common_vendor.t(item.count),
-        c: "7f6951af-0-" + i0,
-        d: common_vendor.p({
-          type: item.expanded ? "up" : "down",
-          size: "16",
-          color: "#A0AEC0"
-        }),
-        e: item.timestamp,
-        f: common_vendor.o(($event) => $options.toggleTimeline(item), item.timestamp)
-      };
+    f: common_vendor.sr("timelineRef", "7f6951af-2"),
+    g: common_vendor.o($options.loadTimelineArticles),
+    h: common_vendor.o($options.goToDetail),
+    i: common_vendor.p({
+      timeline: $data.timeline
     }),
-    e: $data.expandedTimeline
-  }, $data.expandedTimeline ? {
-    f: common_vendor.f($data.expandedTimeline.articles, (article, k0, i0) => {
-      return {
-        a: common_vendor.t(article.title),
-        b: common_vendor.t($options.formatTime(article.publishTime)),
-        c: article._id,
-        d: common_vendor.o(($event) => $options.goToDetail(article._id), article._id)
-      };
+    j: common_vendor.o($options.handleSubscribe),
+    k: common_vendor.o($options.handleUnsubscribe),
+    l: common_vendor.o($options.viewMoreSubscribe),
+    m: common_vendor.p({
+      subscribed: $data.subscribed,
+      recommended: $data.recommended
     })
-  } : {});
+  };
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-7f6951af"]]);
 wx.createPage(MiniProgramPage);

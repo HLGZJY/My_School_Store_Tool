@@ -26,8 +26,8 @@
                     class="collection-card"
                     @click="goToDetail(item.articleId)"
                 >
-                    <text class="article-title">{{ item.article.title }}</text>
-                    <text class="article-meta">{{ item.article.sourceName }} | {{ formatTime(item.createTime) }}</text>
+                    <text class="article-title">{{ item.article?.title || '未知标题' }}</text>
+                    <text class="article-meta">{{ item.article?.sourceName || '未知来源' }} | {{ formatTime(item.collectTime) }}</text>
                     <view class="action" @click.stop="toggleSelect(item._id)">
                         <uni-icons :type="item.selected ? 'checkbox-filled' : 'circle'" size="18" :color="item.selected ? '#00D4AA' : '#A0AEC0'"></uni-icons>
                     </view>
@@ -87,6 +87,14 @@ export default {
     },
     onLoad() {
         this.loadCollections()
+        uni.$on('collectChange', this.onCollectChange)
+    },
+    onShow() {
+        // 从详情页返回时刷新列表
+        this.loadCollections(true)
+    },
+    onUnload() {
+        uni.$off('collectChange', this.onCollectChange)
     },
     onPullDownRefresh() {
         this.page = 1
@@ -99,13 +107,13 @@ export default {
             this.loading = true
 
             try {
-                const userId = this.$store.state.user.userId
+                const openid = uni.getStorageSync('userId')
                 const category = this.categories[this.currentCategory].category
 
                 const res = await uniCloud.callFunction({
                     name: 'getCollections',
                     data: {
-                        userId,
+                        userId: openid,
                         category,
                         page: this.page,
                         pageSize: 20
@@ -178,10 +186,11 @@ export default {
                         uni.showLoading({ title: '删除中...' })
 
                         try {
+                            const openid = uni.getStorageSync('userId')
                             const res = await uniCloud.callFunction({
                                 name: 'batchUncollect',
                                 data: {
-                                    userId: this.$store.state.user.userId,
+                                    userId: openid,
                                     articleIds: this.selectedIds
                                 }
                             })
@@ -219,6 +228,16 @@ export default {
         formatTime(timestamp) {
             const date = new Date(timestamp)
             return `${date.getMonth() + 1}月${date.getDate()}日`
+        },
+
+        onCollectChange({ articleId, collected }) {
+            if (!collected) {
+                // 如果取消了收藏，从列表中移除
+                const index = this.collections.findIndex(c => c.articleId === articleId)
+                if (index >= 0) {
+                    this.collections.splice(index, 1)
+                }
+            }
         }
     }
 }

@@ -1,0 +1,7 @@
+{
+    "name": "getHotKeywords",
+    "version": "1.0.0",
+    "description": "获取热门搜索词",
+    "main": "index.js",
+    "dependencies": {}
+}

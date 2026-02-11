@@ -1,0 +1,10 @@
+{"sourceId":"jwc","sourceName":"教务处","sourceType":"official","description":"教务处通知公告","category":"notice","enabled":true}
+{"sourceId":"library","sourceName":"图书馆","sourceType":"official","description":"图书馆服务与通知","category":"service","enabled":true}
+{"sourceId":"xsc","sourceName":"学生处","sourceType":"official","description":"学生事务管理","category":"notice","enabled":true}
+{"sourceId":"cs","sourceName":"计算机学院","sourceType":"college","description":"计算机学院通知","category":"academic","enabled":true}
+{"sourceId":"jyzd","sourceName":"就业指导中心","sourceType":"official","description":"就业招聘信息","category":"service","enabled":true}
+{"sourceId":"kyc","sourceName":"科研处","sourceType":"official","description":"科研项目申报","category":"academic","enabled":true}
+{"sourceId":"tyb","sourceName":"体育部","sourceType":"official","description":"体育活动通知","category":"activity","enabled":true}
+{"sourceId":"xyy","sourceName":"校医院","sourceType":"official","description":"医疗服务通知","category":"service","enabled":true}
+{"sourceId":"bwc","sourceName":"保卫处","sourceType":"official","description":"校园安全通知","category":"notice","enabled":true}
+{"sourceId":"houqin","sourceName":"后勤处","sourceType":"official","description":"后勤服务通知","category":"service","enabled":true}

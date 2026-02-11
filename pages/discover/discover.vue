@@ -1,118 +1,90 @@
 <template>
     <view class="container">
         <!-- 热门排行 -->
-        <view class="section">
-            <view class="section-header">
-                <text class="section-title">🔥 热门排行</text>
-                <text class="more-link" @click="viewMoreRanking">查看更多</text>
-            </view>
-            <view class="ranking-list">
-                <view
-                    v-for="(item, index) in ranking"
-                    :key="item._id"
-                    class="ranking-item"
-                    @click="goToDetail(item._id)"
-                >
-                    <view class="rank" :class="'rank-' + (index + 1)">{{ index + 1 }}</view>
-                    <view class="ranking-info">
-                        <text class="article-title">{{ item.title }}</text>
-                        <text class="article-meta">{{ item.count }} 阅读</text>
-                    </view>
-                </view>
-            </view>
-        </view>
+        <HotRanking
+            :ranking="ranking"
+            @more="viewMoreRanking"
+            @detail="goToDetail"
+        />
 
         <!-- 标签云 -->
-        <view class="section">
-            <view class="section-header">
-                <text class="section-title">🏷️ 标签云</text>
-            </view>
-            <view class="tag-cloud">
-                <view
-                    v-for="tag in tags"
-                    :key="tag.name"
-                    class="tag-item"
-                    :style="{ fontSize: getTagSize(tag.count) }"
-                    @click="searchTag(tag.name)"
-                >
-                    {{ tag.name }}
-                </view>
-            </view>
-        </view>
+        <TagCloud
+            :tags="tags"
+            @search="searchTag"
+        />
 
         <!-- 时间轴 -->
-        <view class="section">
-            <view class="section-header">
-                <text class="section-title">📅 时间轴</text>
-            </view>
-            <view class="timeline">
-                <view
-                    v-for="item in timeline"
-                    :key="item.timestamp"
-                    class="timeline-item"
-                    @click="toggleTimeline(item)"
-                >
-                    <view class="timeline-date">
-                        <text class="date">{{ item.date }}</text>
-                        <text class="count">{{ item.count }}篇</text>
-                    </view>
-                    <view class="timeline-arrow">
-                        <uni-icons :type="item.expanded ? 'up' : 'down'" size="16" color="#A0AEC0"></uni-icons>
-                    </view>
-                </view>
-            </view>
-        </view>
+        <Timeline
+            ref="timelineRef"
+            :timeline="timeline"
+            @toggle="loadTimelineArticles"
+            @detail="goToDetail"
+        />
 
-        <!-- 展开的时间轴内容 -->
-        <view v-if="expandedTimeline" class="expanded-content">
-            <view
-                v-for="article in expandedTimeline.articles"
-                :key="article._id"
-                class="timeline-article"
-                @click="goToDetail(article._id)"
-            >
-                <text class="article-title">{{ article.title }}</text>
-                <text class="article-time">{{ formatTime(article.publishTime) }}</text>
-            </view>
-        </view>
+        <!-- 订阅管理 -->
+        <SubscribeManager
+            :subscribed="subscribed"
+            :recommended="recommended"
+            @subscribe="handleSubscribe"
+            @unsubscribe="handleUnsubscribe"
+            @more="viewMoreSubscribe"
+        />
     </view>
 </template>
 
 <script>
+import HotRanking from './components/HotRanking.vue'
+import TagCloud from './components/TagCloud.vue'
+import Timeline from './components/Timeline.vue'
+import SubscribeManager from './components/SubscribeManager.vue'
+
 export default {
+    name: 'Discover',
+    components: {
+        HotRanking,
+        TagCloud,
+        Timeline,
+        SubscribeManager
+    },
     data() {
         return {
             ranking: [],
             tags: [],
             timeline: [],
-            expandedTimeline: null
+            subscribed: [],
+            recommended: []
         }
     },
     onLoad() {
         this.loadHotRanking()
         this.loadTagCloud()
         this.loadTimeline()
+        this.loadSubscriptions()
     },
     methods: {
+        // 加载热门排行
         async loadHotRanking() {
             try {
                 const res = await uniCloud.callFunction({
-                    name: 'getHotRanking',
+                    name: 'getHotArticles',
                     data: {
-                        type: 'view',
                         days: 7,
                         limit: 5
                     }
                 })
 
                 if (res.result.code === 0) {
-                    this.ranking = res.result.data.ranking || []
+                    console.log('热门排行数据:', res.result.data)
+                    this.ranking = res.result.data || []
+                } else {
+                    console.error('热门排行错误:', res.result.message)
                 }
             } catch (error) {
                 console.error('加载热门排行失败:', error)
             }
         },
 
+        // 加载标签云
         async loadTagCloud() {
             try {
                 const res = await uniCloud.callFunction({
@@ -123,65 +95,40 @@ export default {
                 })
 
                 if (res.result.code === 0) {
-                    this.tags = res.result.data.tags || []
+                    console.log('标签云数据:', res.result.data)
+                    this.tags = res.result.data || []
+                } else {
+                    console.error('标签云错误:', res.result.message)
                 }
             } catch (error) {
                 console.error('加载标签云失败:', error)
             }
         },
 
+        // 加载时间轴
         async loadTimeline() {
             try {
-                const userId = this.$store.state.user.userId
-
                 const res = await uniCloud.callFunction({
-                    name: 'getTimeline',
-                    data: {
-                        userId
-                    }
+                    name: 'getTimeline'
                 })
 
                 if (res.result.code === 0) {
-                    this.timeline = res.result.data.timeline || []
+                    console.log('时间轴数据:', res.result.data)
+                    this.timeline = res.result.data || []
+                } else {
+                    console.error('时间轴错误:', res.result.message)
                 }
             } catch (error) {
                 console.error('加载时间轴失败:', error)
             }
         },
 
-        getTagSize(count) {
-            const minCount = Math.min(...this.tags.map(t => t.count))
-            const maxCount = Math.max(...this.tags.map(t => t.count))
-            const ratio = (count - minCount) / (maxCount - minCount)
-            const minSize = 14
-            const maxSize = 18
-            return minSize + ratio * (maxSize - minSize) + 'px'
-        },
-
-        toggleTimeline(item) {
-            if (this.expandedTimeline && this.expandedTimeline.timestamp === item.timestamp) {
-                item.expanded = !item.expanded
-                if (!item.expanded) {
-                    this.expandedTimeline = null
-                }
-            } else {
-                if (this.expandedTimeline) {
-                    this.expandedTimeline.expanded = false
-                }
-                item.expanded = true
-                this.expandedTimeline = item
-                this.loadTimelineArticles(item)
-            }
-        },
-
+        // 加载时间轴文章
         async loadTimelineArticles(timelineItem) {
             try {
-                const userId = this.$store.state.user.userId
-
                 const res = await uniCloud.callFunction({
                     name: 'getArticles',
                     data: {
-                        userId,
                         page: 1,
                         pageSize: 50,
                         startDate: timelineItem.timestamp,
@@ -190,36 +137,104 @@ export default {
                 })
 
                 if (res.result.code === 0) {
-                    timelineItem.articles = res.result.data.articles || []
+                    const articles = res.result.data.articles || []
+                    // 更新对应项的 articles
+                    const index = this.timeline.findIndex(t => t.timestamp === timelineItem.timestamp)
+                    if (index >= 0) {
+                        this.timeline[index].articles = articles
+                    }
                 }
             } catch (error) {
                 console.error('加载时间轴文章失败:', error)
             }
         },
 
-        searchTag(tag) {
+        // 加载订阅列表
+        loadSubscriptions() {
+            const allSources = [
+                { id: 'jwc', name: '教务处', type: 'official' },
+                { id: 'library', name: '图书馆', type: 'official' },
+                { id: 'xsc', name: '学生处', type: 'official' },
+                { id: 'cs', name: '计算机学院', type: 'college' },
+                { id: 'jyzd', name: '就业指导中心', type: 'official' }
+            ]
+
+            const subscriptions = uni.getStorageSync('subscriptions') || []
+
+            this.subscribed = allSources.filter(s =>
+                subscriptions.some(sub => sub.id === s.id)
+            )
+            this.recommended = allSources.filter(s =>
+                !subscriptions.some(sub => sub.id === s.id)
+            )
+        },
+
+        // 搜索标签
+        searchTag(tagName) {
             uni.navigateTo({
-                url: `/pages/search/search?keyword=${tag}`
+                url: `/pages/search/search?keyword=${tagName}`
             })
         },
 
+        // 查看更多排行
         viewMoreRanking() {
-            // 可以跳转到专门的热门排行页面
             uni.showToast({
                 title: '功能开发中',
                 icon: 'none'
             })
         },
 
+        // 查看更多订阅
+        viewMoreSubscribe() {
+            uni.navigateTo({
+                url: '/pages/subscribe/subscribe'
+            })
+        },
+
+        // 订阅
+        handleSubscribe(item) {
+            const subscriptions = uni.getStorageSync('subscriptions') || []
+            subscriptions.push({
+                id: item.id,
+                name: item.name,
+                subscribeTime: Date.now()
+            })
+            uni.setStorageSync('subscriptions', subscriptions)
+
+            // 更新本地状态
+            this.subscribed.push(item)
+            this.recommended = this.recommended.filter(r => r.id !== item.id)
+
+            uni.showToast({
+                title: '订阅成功',
+                icon: 'success'
+            })
+        },
+
+        // 取消订阅
+        handleUnsubscribe(item) {
+            const subscriptions = uni.getStorageSync('subscriptions') || []
+            const index = subscriptions.findIndex(s => s.id === item.id)
+            if (index >= 0) {
+                subscriptions.splice(index, 1)
+            }
+            uni.setStorageSync('subscriptions', subscriptions)
+
+            // 更新本地状态
+            this.recommended.push(item)
+            this.subscribed = this.subscribed.filter(s => s.id !== item.id)
+
+            uni.showToast({
+                title: '已取消订阅',
+                icon: 'none'
+            })
+        },
+
+        // 跳转详情
         goToDetail(id) {
             uni.navigateTo({
                 url: `/pages/detail/detail?id=${id}`
             })
-        },
-
-        formatTime(timestamp) {
-            const date = new Date(timestamp)
-            return `${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`
         }
     }
 }
@@ -229,161 +244,6 @@ export default {
 .container {
     min-height: 100vh;
     background-color: #F7F9FA;
-}
-
-.section {
-    padding: 20px;
-    background-color: #FFFFFF;
-    margin-bottom: 8px;
-}
-
-.section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-}
-
-.section-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #0A2540;
-}
-
-.more-link {
-    font-size: 14px;
-    color: #00D4AA;
-}
-
-.ranking-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid #E8ECF1;
-
-    &:last-child {
-        border-bottom: none;
-    }
-}
-
-.rank {
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #E8ECF1;
-    color: #4A5568;
-    font-size: 12px;
-    font-weight: 600;
-    border-radius: 4px;
-    margin-right: 12px;
-
-    &.rank-1 {
-        background-color: #FFD700;
-        color: #FFFFFF;
-    }
-
-    &.rank-2 {
-        background-color: #C0C0C0;
-        color: #FFFFFF;
-    }
-
-    &.rank-3 {
-        background-color: #CD7F32;
-        color: #FFFFFF;
-    }
-}
-
-.ranking-info {
-    flex: 1;
-
-    .article-title {
-        display: block;
-        font-size: 14px;
-        color: #4A5568;
-        margin-bottom: 4px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: -webkit-box;
-        -webkit-line-clamp: 1;
-        -webkit-box-orient: vertical;
-    }
-
-    .article-meta {
-        display: block;
-        font-size: 12px;
-        color: #A0AEC0;
-    }
-}
-
-.tag-cloud {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-.tag-item {
-    padding: 8px 16px;
-    background-color: #F7F9FA;
-    border-radius: 20px;
-    color: #4A5568;
-
-    &:active {
-        background-color: #E8ECF1;
-    }
-}
-
-.timeline-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 0;
-    border-bottom: 1px solid #E8ECF1;
-
-    &:last-child {
-        border-bottom: none;
-    }
-}
-
-.timeline-date {
-    .date {
-        font-size: 14px;
-        font-weight: 600;
-        color: #0A2540;
-        margin-right: 12px;
-    }
-
-    .count {
-        font-size: 12px;
-        color: #A0AEC0;
-    }
-}
-
-.expanded-content {
-    padding: 0 20px;
-    background-color: #F7F9FA;
-}
-
-.timeline-article {
-    padding: 12px 0;
-    border-bottom: 1px solid #E8ECF1;
-
-    &:last-child {
-        border-bottom: none;
-    }
-
-    .article-title {
-        display: block;
-        font-size: 14px;
-        color: #4A5568;
-        margin-bottom: 4px;
-    }
-
-    .article-time {
-        display: block;
-        font-size: 12px;
-        color: #A0AEC0;
-    }
+    padding-bottom: 20px;
 }
 </style>

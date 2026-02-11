@@ -1,0 +1,33 @@
+{
+	"bsonType": "object",
+	"description": "搜索历史表 - 用户的搜索记录",
+	"required": ["userId", "keyword", "searchTime"],
+	"permission": {
+		"read": "doc.userId == auth.userId",
+		"create": "doc.userId == auth.userId",
+		"update": false,
+		"delete": "doc.userId == auth.userId",
+		"count": "doc.userId == auth.userId"
+	},
+	"properties": {
+		"_id": {
+			"description": "记录ID"
+		},
+		"userId": {
+			"bsonType": "string",
+			"description": "用户ID"
+		},
+		"keyword": {
+			"bsonType": "string",
+			"description": "搜索关键词"
+		},
+		"resultCount": {
+			"bsonType": "number",
+			"description": "搜索结果数量"
+		},
+		"searchTime": {
+			"bsonType": "number",
+			"description": "搜索时间"
+		}
+	}
+}

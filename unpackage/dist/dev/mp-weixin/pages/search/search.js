@@ -1,6 +1,15 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const SearchHeader = () => "./components/SearchHeader.js";
+const SearchSuggest = () => "./components/SearchSuggest.js";
+const SearchResult = () => "./components/SearchResult.js";
 const _sfc_main = {
+  name: "Search",
+  components: {
+    SearchHeader,
+    SearchSuggest,
+    SearchResult
+  },
   data() {
     return {
       keyword: "",
@@ -13,11 +22,16 @@ const _sfc_main = {
       hotKeywords: []
     };
   },
-  onLoad() {
+  onLoad(options) {
+    if (options.keyword) {
+      this.keyword = options.keyword;
+      this.doSearch();
+    }
     this.loadHotKeywords();
     this.loadSearchHistory();
   },
   methods: {
+    // 执行搜索
     async doSearch() {
       if (!this.keyword.trim()) {
         common_vendor.index.showToast({
@@ -33,16 +47,15 @@ const _sfc_main = {
       await this.loadArticles();
       this.saveSearchHistory();
     },
+    // 加载搜索结果
     async loadArticles() {
       if (this.loading)
         return;
       this.loading = true;
       try {
-        const userId = this.$store.state.user.userId;
         const res = await common_vendor.Vs.callFunction({
           name: "searchArticles",
           data: {
-            userId,
             keyword: this.keyword,
             page: this.page,
             pageSize: 20
@@ -67,30 +80,32 @@ const _sfc_main = {
         this.loading = false;
       }
     },
+    // 加载更多
     loadMore() {
       if (this.hasMore && !this.loading) {
         this.page++;
         this.loadArticles();
       }
     },
+    // 加载热门关键词
     async loadHotKeywords() {
       try {
         const res = await common_vendor.Vs.callFunction({
           name: "getHotKeywords",
-          data: {
-            limit: 10
-          }
+          data: { limit: 10 }
         });
         if (res.result.code === 0) {
-          this.hotKeywords = res.result.data.tags || [];
+          this.hotKeywords = res.result.data || [];
         }
       } catch (error) {
         console.error("加载热门搜索失败:", error);
       }
     },
+    // 加载搜索历史
     loadSearchHistory() {
       this.searchHistory = common_vendor.index.getStorageSync("searchHistory") || [];
     },
+    // 保存搜索历史
     saveSearchHistory() {
       let history = common_vendor.index.getStorageSync("searchHistory") || [];
       history = history.filter((item) => item !== this.keyword);
@@ -98,15 +113,18 @@ const _sfc_main = {
       history = history.slice(0, 10);
       common_vendor.index.setStorageSync("searchHistory", history);
       this.searchHistory = history;
+      const openid = this.$store.state.user.userId || common_vendor.index.getStorageSync("userId") || "anonymous";
       common_vendor.Vs.callFunction({
         name: "reportSearch",
         data: {
-          userId: this.$store.state.user.userId,
           keyword: this.keyword,
-          resultCount: this.articles.length
+          resultCount: this.articles.length,
+          userId: openid
+          // 方案A：传递 openid
         }
       });
     },
+    // 清空历史
     clearHistory() {
       common_vendor.index.showModal({
         title: "提示",
@@ -119,90 +137,56 @@ const _sfc_main = {
         }
       });
     },
+    // 点击搜索项
     searchItem(keyword) {
       this.keyword = keyword;
       this.doSearch();
     },
-    highlightKeyword(text) {
-      if (!this.keyword)
-        return text;
-      const reg = new RegExp(this.keyword, "gi");
-      return text.replace(reg, `<span class="highlight">${this.keyword}</span>`);
-    },
+    // 跳转详情
     goToDetail(id) {
       common_vendor.index.navigateTo({
         url: `/pages/detail/detail?id=${id}`
       });
     },
+    // 返回
     goBack() {
       common_vendor.index.navigateBack();
-    },
-    formatTime(timestamp) {
-      const date = new Date(timestamp);
-      return `${date.getMonth() + 1}月${date.getDate()}日`;
     }
   }
 };
 if (!Array) {
-  const _component_uni_icons = common_vendor.resolveComponent("uni-icons");
-  const _component_uni_load_more = common_vendor.resolveComponent("uni-load-more");
-  (_component_uni_icons + _component_uni_load_more)();
+  const _component_SearchHeader = common_vendor.resolveComponent("SearchHeader");
+  const _component_SearchResult = common_vendor.resolveComponent("SearchResult");
+  const _component_SearchSuggest = common_vendor.resolveComponent("SearchSuggest");
+  (_component_SearchHeader + _component_SearchResult + _component_SearchSuggest)();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: common_vendor.o($options.goBack),
-    b: common_vendor.p({
-      type: "back",
-      size: "20",
-      color: "#0A2540"
+    a: common_vendor.o($options.doSearch),
+    b: common_vendor.o($options.goBack),
+    c: common_vendor.o(($event) => $data.keyword = $event),
+    d: common_vendor.p({
+      focus: true,
+      keyword: $data.keyword
     }),
-    c: common_vendor.o((...args) => $options.doSearch && $options.doSearch(...args)),
-    d: $data.keyword,
-    e: common_vendor.o(($event) => $data.keyword = $event.detail.value),
-    f: common_vendor.o((...args) => $options.doSearch && $options.doSearch(...args)),
-    g: $data.hasSearched
-  }, $data.hasSearched ? common_vendor.e({
-    h: $data.articles.length > 0
-  }, $data.articles.length > 0 ? common_vendor.e({
-    i: common_vendor.f($data.articles, (article, k0, i0) => {
-      return {
-        a: $options.highlightKeyword(article.title),
-        b: common_vendor.t(article.sourceName),
-        c: common_vendor.t($options.formatTime(article.publishTime)),
-        d: article._id,
-        e: common_vendor.o(($event) => $options.goToDetail(article._id), article._id)
-      };
-    }),
-    j: $data.loading
-  }, $data.loading ? {
+    e: $data.hasSearched
+  }, $data.hasSearched ? {
+    f: common_vendor.o($options.loadMore),
+    g: common_vendor.o($options.goToDetail),
+    h: common_vendor.p({
+      articles: $data.articles,
+      loading: $data.loading,
+      ["has-more"]: $data.hasMore,
+      keyword: $data.keyword
+    })
+  } : {
+    i: common_vendor.o($options.searchItem),
+    j: common_vendor.o($options.clearHistory),
     k: common_vendor.p({
-      status: "loading"
+      history: $data.searchHistory,
+      ["hot-keywords"]: $data.hotKeywords
     })
-  } : {}, {
-    l: !$data.hasMore && $data.articles.length > 0
-  }, !$data.hasMore && $data.articles.length > 0 ? {} : {}) : {}, {
-    m: common_vendor.o((...args) => $options.loadMore && $options.loadMore(...args))
-  }) : common_vendor.e({
-    n: $data.searchHistory.length > 0
-  }, $data.searchHistory.length > 0 ? {
-    o: common_vendor.o((...args) => $options.clearHistory && $options.clearHistory(...args)),
-    p: common_vendor.f($data.searchHistory, (item, k0, i0) => {
-      return {
-        a: common_vendor.t(item),
-        b: item,
-        c: common_vendor.o(($event) => $options.searchItem(item), item)
-      };
-    })
-  } : {}, {
-    q: common_vendor.f($data.hotKeywords, (item, k0, i0) => {
-      return {
-        a: common_vendor.t(item.keyword),
-        b: item.keyword,
-        c: item.count > 100 ? 1 : "",
-        d: common_vendor.o(($event) => $options.searchItem(item.keyword), item.keyword)
-      };
-    })
-  }));
+  });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-c10c040c"]]);
 wx.createPage(MiniProgramPage);

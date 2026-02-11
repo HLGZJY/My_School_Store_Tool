@@ -28,11 +28,11 @@ const _sfc_main = {
         return;
       this.loading = true;
       try {
-        const userId = this.$store.state.user.userId;
+        const openid = common_vendor.index.getStorageSync("userId");
         const res = await common_vendor.Vs.callFunction({
           name: "getMessages",
           data: {
-            userId,
+            userId: openid,
             type: "all",
             page: this.page,
             pageSize: 20
@@ -81,10 +81,11 @@ const _sfc_main = {
     },
     async markAsRead(messageId) {
       try {
+        const openid = common_vendor.index.getStorageSync("userId");
         await common_vendor.Vs.callFunction({
           name: "markMessageRead",
           data: {
-            userId: this.$store.state.user.userId,
+            userId: openid,
             messageId
           }
         });
@@ -99,10 +100,11 @@ const _sfc_main = {
         success: async (res) => {
           if (res.confirm) {
             try {
+              const openid = common_vendor.index.getStorageSync("userId");
               await common_vendor.Vs.callFunction({
                 name: "markMessageRead",
                 data: {
-                  userId: this.$store.state.user.userId,
+                  userId: openid,
                   all: true
                 }
               });

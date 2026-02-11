@@ -1,0 +1,41 @@
+{
+	"bsonType": "object",
+	"description": "数据源表 - 校园信息订阅来源",
+	"required": ["sourceId", "sourceName", "sourceType"],
+	"permission": {
+		"read": true,
+		"create": false,
+		"update": false,
+		"delete": false,
+		"count": true
+	},
+	"properties": {
+		"_id": {
+			"description": "记录ID"
+		},
+		"sourceId": {
+			"bsonType": "string",
+			"description": "来源标识，唯一"
+		},
+		"sourceName": {
+			"bsonType": "string",
+			"description": "来源名称"
+		},
+		"sourceType": {
+			"bsonType": "string",
+			"description": "来源类型：official-官方部门/college-学院"
+		},
+		"description": {
+			"bsonType": "string",
+			"description": "来源描述"
+		},
+		"category": {
+			"bsonType": "string",
+			"description": "所属分类"
+		},
+		"enabled": {
+			"bsonType": "bool",
+			"description": "是否启用"
+		}
+	}
+}

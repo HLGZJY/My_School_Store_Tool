@@ -2,5 +2,10 @@
   "navigationBarTitleText": "发现",
   "navigationBarBackgroundColor": "#FFFFFF",
   "navigationBarTextStyle": "black",
-  "usingComponents": {}
+  "usingComponents": {
+    "hot-ranking": "./components/HotRanking",
+    "tag-cloud": "./components/TagCloud",
+    "timeline": "./components/Timeline",
+    "subscribe-manager": "./components/SubscribeManager"
+  }
 }

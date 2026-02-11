@@ -16,8 +16,8 @@
                     class="history-card"
                     @click="goToDetail(item.articleId)"
                 >
-                    <text class="article-title">{{ item.article.title }}</text>
-                    <text class="article-meta">{{ item.article.sourceName }} | {{ formatTime(item.readTime) }} | 阅读时长 {{ formatDuration(item.readDuration) }}</text>
+                    <text class="article-title">{{ item.article?.title || '未知标题' }}</text>
+                    <text class="article-meta">{{ item.article?.sourceName || '未知来源' }} | {{ formatTime(item.readTime) }} | 阅读时长 {{ formatDuration(item.duration) }}</text>
                 </view>
 
                 <view v-if="loading" class="loading-more">
@@ -60,12 +60,12 @@ export default {
             this.loading = true
 
             try {
-                const userId = this.$store.state.user.userId
+                const openid = uni.getStorageSync('userId')
 
                 const res = await uniCloud.callFunction({
                     name: 'getReadingHistory',
                     data: {
-                        userId,
+                        userId: openid,
                         page: this.page,
                         pageSize: 20
                     }
@@ -110,11 +110,11 @@ export default {
                         uni.showLoading({ title: '清空中...' })
 
                         try {
-                            const userId = this.$store.state.user.userId
+                            const openid = uni.getStorageSync('userId')
 
                             const res = await uniCloud.callFunction({
                                 name: 'clearReadingHistory',
-                                data: { userId }
+                                data: { userId: openid }
                             })
 
                             if (res.result.code === 0) {

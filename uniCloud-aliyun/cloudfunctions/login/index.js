@@ -136,12 +136,23 @@ exports.main = async (event, context) => {
             const existingUser = userQuery.data[0];
             userId = existingUser._id;
 
-            await db.collection('users').doc(userId).update({
+            // 确保 stats 字段存在
+            const updateData = {
                 nickname: userInfo?.nickName || existingUser.nickname,
                 avatar: userInfo?.avatarUrl || existingUser.avatar,
                 lastLoginTime: Date.now(),
                 updateTime: Date.now()
-            });
+            };
+
+            if (!existingUser.stats) {
+                updateData.stats = {
+                    readCount: 0,
+                    collectCount: 0,
+                    searchCount: 0
+                };
+            }
+
+            await db.collection('users').doc(userId).update(updateData);
             console.log('老用户登录更新时间:', userId);
         }
 

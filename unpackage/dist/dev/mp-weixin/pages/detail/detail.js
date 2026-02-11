@@ -14,21 +14,24 @@ const _sfc_main = {
     this.loadArticleDetail();
     this.loadCollectStatus();
     this.recordRead();
+    common_vendor.index.$on("collectChange", this.onCollectChange);
+  },
+  onUnload() {
+    common_vendor.index.$off("collectChange", this.onCollectChange);
   },
   methods: {
     async loadArticleDetail() {
       try {
-        const userId = this.$store.state.user.userId;
         const res = await common_vendor.Vs.callFunction({
           name: "getArticleDetail",
           data: {
-            articleId: this.articleId,
-            userId
+            articleId: this.articleId
           }
         });
         if (res.result.code === 0) {
           this.article = res.result.data;
           this.relatedArticles = res.result.data.relatedArticles || [];
+          console.log("文章详情加载成功:", this.article._id);
         }
       } catch (error) {
         console.error("加载文章详情失败:", error);
@@ -40,13 +43,16 @@ const _sfc_main = {
     },
     async loadCollectStatus() {
       try {
-        const userId = this.$store.state.user.userId;
-        if (!userId)
+        const openid = this.$store.state.user.userId || common_vendor.index.getStorageSync("userId");
+        if (!openid) {
+          console.log("loadCollectStatus: 未登录，不检查收藏状态");
           return;
+        }
         const res = await common_vendor.Vs.callFunction({
           name: "getCollections",
           data: {
-            userId,
+            userId: openid,
+            // 方案A：传递 openid
             articleId: this.articleId,
             pageSize: 1
           }
@@ -60,13 +66,11 @@ const _sfc_main = {
     },
     async recordRead() {
       try {
-        const userId = this.$store.state.user.userId;
-        if (!userId)
-          return;
+        const openid = this.$store.state.user.userId;
         common_vendor.Vs.callFunction({
           name: "recordRead",
           data: {
-            userId,
+            userId: openid || "anonymous",
             articleId: this.articleId,
             duration: 0
           }
@@ -76,8 +80,8 @@ const _sfc_main = {
       }
     },
     async toggleCollect() {
-      const userId = this.$store.state.user.userId;
-      if (!userId) {
+      const openid = this.$store.state.user.userId || common_vendor.index.getStorageSync("userId");
+      if (!openid) {
         common_vendor.index.showToast({
           title: "请先登录",
           icon: "none"
@@ -88,16 +92,24 @@ const _sfc_main = {
         const res = await common_vendor.Vs.callFunction({
           name: "collectArticle",
           data: {
-            userId,
+            userId: openid,
+            // 方案A：传递 openid
             articleId: this.articleId,
             action: this.isCollected ? "uncollect" : "collect"
           }
         });
+        console.log("收藏响应:", res.result);
         if (res.result.code === 0) {
           this.isCollected = !this.isCollected;
+          common_vendor.index.$emit("collectChange", { articleId: this.articleId, collected: this.isCollected });
           common_vendor.index.showToast({
             title: this.isCollected ? "收藏成功" : "取消收藏",
             icon: "success"
+          });
+        } else {
+          common_vendor.index.showToast({
+            title: res.result.message || "操作失败",
+            icon: "none"
           });
         }
       } catch (error) {
@@ -137,6 +149,11 @@ const _sfc_main = {
     },
     goBack() {
       common_vendor.index.navigateBack();
+    },
+    onCollectChange({ articleId, collected }) {
+      if (articleId === this.articleId) {
+        this.isCollected = collected;
+      }
     },
     goToArticle(id) {
       common_vendor.index.redirectTo({

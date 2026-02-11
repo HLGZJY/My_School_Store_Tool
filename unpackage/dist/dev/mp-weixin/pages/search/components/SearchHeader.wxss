@@ -1,0 +1,29 @@
+/**
+ * 全局样式变量
+ */
+/* 主题颜色 */
+/* 原有 uni-app 变量 */
+/* 字体大小 */
+/* 边框圆角 */
+/* 间距 */
+.search-bar.data-v-c7ad7d98 {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #FFFFFF;
+}
+.search-input.data-v-c7ad7d98 {
+  flex: 1;
+  height: 40px;
+  padding: 0 12px;
+  background-color: #F7F9FA;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #4A5568;
+}
+.search-btn.data-v-c7ad7d98 {
+  margin-left: 12px;
+  padding: 0 16px;
+  font-size: 14px;
+  color: #00D4AA;
+}

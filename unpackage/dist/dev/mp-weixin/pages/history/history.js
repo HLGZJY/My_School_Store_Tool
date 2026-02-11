@@ -23,11 +23,11 @@ const _sfc_main = {
         return;
       this.loading = true;
       try {
-        const userId = this.$store.state.user.userId;
+        const openid = common_vendor.index.getStorageSync("userId");
         const res = await common_vendor.Vs.callFunction({
           name: "getReadingHistory",
           data: {
-            userId,
+            userId: openid,
             page: this.page,
             pageSize: 20
           }
@@ -66,10 +66,10 @@ const _sfc_main = {
           if (res.confirm) {
             common_vendor.index.showLoading({ title: "清空中..." });
             try {
-              const userId = this.$store.state.user.userId;
+              const openid = common_vendor.index.getStorageSync("userId");
               const res2 = await common_vendor.Vs.callFunction({
                 name: "clearReadingHistory",
-                data: { userId }
+                data: { userId: openid }
               });
               if (res2.result.code === 0) {
                 common_vendor.index.showToast({
@@ -138,11 +138,12 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     c: $data.history.length > 0
   }, $data.history.length > 0 ? common_vendor.e({
     d: common_vendor.f($data.history, (item, k0, i0) => {
+      var _a, _b;
       return {
-        a: common_vendor.t(item.article.title),
-        b: common_vendor.t(item.article.sourceName),
+        a: common_vendor.t(((_a = item.article) == null ? void 0 : _a.title) || "未知标题"),
+        b: common_vendor.t(((_b = item.article) == null ? void 0 : _b.sourceName) || "未知来源"),
         c: common_vendor.t($options.formatTime(item.readTime)),
-        d: common_vendor.t($options.formatDuration(item.readDuration)),
+        d: common_vendor.t($options.formatDuration(item.duration)),
         e: item._id,
         f: common_vendor.o(($event) => $options.goToDetail(item.articleId), item._id)
       };

@@ -1,0 +1,12 @@
+{
+    "name": "collectArticle",
+    "version": "1.0.0",
+    "description": "收藏/取消收藏文章",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {}
+}

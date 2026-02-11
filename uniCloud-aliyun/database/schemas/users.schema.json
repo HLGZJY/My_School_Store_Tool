@@ -1,0 +1,84 @@
+{
+	"bsonType": "object",
+	"description": "用户表",
+	"required": ["openid"],
+	"permission": {
+		"read": "doc.openid == auth.openid",
+		"create": false,
+		"update": "doc.openid == auth.openid",
+		"delete": false,
+		"count": true
+	},
+	"properties": {
+		"_id": {
+			"description": "用户文档ID"
+		},
+		"openid": {
+			"bsonType": "string",
+			"description": "微信OpenID（唯一索引）",
+			"forceDefaultValue": {
+				"$env": "openid"
+			}
+		},
+		"nickname": {
+			"bsonType": "string",
+			"description": "用户昵称"
+		},
+		"avatar": {
+			"bsonType": "string",
+			"description": "头像URL"
+		},
+		"role": {
+			"bsonType": ["string", "null"],
+			"description": "角色: student/teacher/admin"
+		},
+		"roleDetail": {
+			"bsonType": "object",
+			"description": "角色详情",
+			"properties": {
+				"major": { "bsonType": "string", "description": "专业" },
+				"grade": { "bsonType": "string", "description": "年级" },
+				"department": { "bsonType": "string", "description": "院系" },
+				"title": { "bsonType": "string", "description": "职称" }
+			}
+		},
+		"settings": {
+			"bsonType": "object",
+			"description": "用户设置",
+			"properties": {
+				"fontSize": { "bsonType": "string", "description": "字体大小" },
+				"darkMode": { "bsonType": "bool", "description": "深色模式" }
+			}
+		},
+		"stats": {
+			"bsonType": "object",
+			"description": "统计数据",
+			"properties": {
+				"readCount": { "bsonType": "number", "description": "阅读数" },
+				"collectCount": { "bsonType": "number", "description": "收藏数" },
+				"searchCount": { "bsonType": "number", "description": "搜索数" }
+			}
+		},
+		"subscribeSources": {
+			"bsonType": "array",
+			"description": "订阅的数据源"
+		},
+		"createTime": {
+			"bsonType": "number",
+			"description": "创建时间"
+		},
+		"updateTime": {
+			"bsonType": "number",
+			"description": "更新时间"
+		},
+		"lastLoginTime": {
+			"bsonType": "number",
+			"description": "最后登录时间"
+		}
+	},
+	"index": [{
+		"indexName": "openid_unique",
+		"indexFields": [{ "name": "openid", "order": "asc" }],
+		"unique": true
+	}]
+}

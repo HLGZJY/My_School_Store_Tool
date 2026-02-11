@@ -1,0 +1,48 @@
+/**
+ * 全局样式变量
+ */
+/* 主题颜色 */
+/* 原有 uni-app 变量 */
+/* 字体大小 */
+/* 边框圆角 */
+/* 间距 */
+.user-card.data-v-046ad85a {
+  display: flex;
+  align-items: center;
+  padding: 40px 20px 24px;
+  background-color: #FFFFFF;
+}
+.avatar.data-v-046ad85a {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin-right: 16px;
+}
+.info.data-v-046ad85a {
+  flex: 1;
+}
+.info .nickname.data-v-046ad85a {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+  color: #0A2540;
+  margin-bottom: 8px;
+}
+.role-badge.data-v-046ad85a {
+  display: inline-block;
+  padding: 4px 12px;
+  background-color: #F0FDFA;
+  border-radius: 12px;
+  font-size: 12px;
+  color: #00D4AA;
+}
+.switch-btn.data-v-046ad85a {
+  padding: 8px 16px;
+  background-color: #F7F9FA;
+  border-radius: 16px;
+  font-size: 13px;
+  color: #4A5568;
+}
+.switch-btn.data-v-046ad85a:active {
+  background-color: #E8ECF1;
+}

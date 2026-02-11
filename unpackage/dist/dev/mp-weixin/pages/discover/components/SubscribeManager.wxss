@@ -1,0 +1,82 @@
+/**
+ * 全局样式变量
+ */
+/* 主题颜色 */
+/* 原有 uni-app 变量 */
+/* 字体大小 */
+/* 边框圆角 */
+/* 间距 */
+.section.data-v-e5bbb878 {
+  padding: 20px;
+  background-color: #FFFFFF;
+  margin-bottom: 8px;
+}
+.section-header.data-v-e5bbb878 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.section-title.data-v-e5bbb878 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0A2540;
+}
+.more-link.data-v-e5bbb878 {
+  font-size: 14px;
+  color: #00D4AA;
+}
+.subscribe-group.data-v-e5bbb878 {
+  margin-bottom: 20px;
+}
+.subscribe-group.data-v-e5bbb878:last-child {
+  margin-bottom: 0;
+}
+.group-title.data-v-e5bbb878 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4A5568;
+  margin-bottom: 12px;
+}
+.subscribe-list.data-v-e5bbb878 {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.subscribe-item.data-v-e5bbb878 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: #F7F9FA;
+  border-radius: 8px;
+}
+.subscribe-item.subscribed.data-v-e5bbb878 {
+  background-color: #E6FFFA;
+  border: 1px solid #00D4AA;
+}
+.subscribe-item.data-v-e5bbb878:active {
+  opacity: 0.8;
+}
+.item-name.data-v-e5bbb878 {
+  font-size: 14px;
+  color: #0A2540;
+}
+.subscribe-btn.data-v-e5bbb878 {
+  padding: 4px 12px;
+  background-color: #00D4AA;
+  border-radius: 4px;
+}
+.subscribe-btn text.data-v-e5bbb878 {
+  font-size: 12px;
+  color: #FFFFFF;
+}
+.unsubscribe-btn.data-v-e5bbb878 {
+  padding: 4px 12px;
+  background-color: #E8ECF1;
+  border-radius: 4px;
+}
+.unsubscribe-btn text.data-v-e5bbb878 {
+  font-size: 12px;
+  color: #4A5568;
+}

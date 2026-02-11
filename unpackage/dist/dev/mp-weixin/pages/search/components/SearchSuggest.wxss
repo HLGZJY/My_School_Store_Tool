@@ -1,0 +1,49 @@
+/**
+ * 全局样式变量
+ */
+/* 主题颜色 */
+/* 原有 uni-app 变量 */
+/* 字体大小 */
+/* 边框圆角 */
+/* 间距 */
+.content.data-v-f03278b9 {
+  height: calc(100vh - 64px);
+}
+.section.data-v-f03278b9 {
+  padding: 20px;
+}
+.section-header.data-v-f03278b9 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.section-title.data-v-f03278b9 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0A2540;
+}
+.clear-btn.data-v-f03278b9 {
+  font-size: 14px;
+  color: #00D4AA;
+}
+.tag-list.data-v-f03278b9 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.tag-item.data-v-f03278b9 {
+  padding: 8px 16px;
+  background-color: #FFFFFF;
+  border-radius: 20px;
+  font-size: 14px;
+  color: #4A5568;
+  transition: all 0.2s ease;
+}
+.tag-item.hot.data-v-f03278b9 {
+  color: #00D4AA;
+}
+.tag-item.data-v-f03278b9:active {
+  background-color: #F7F9FA;
+  transform: scale(0.95);
+}
