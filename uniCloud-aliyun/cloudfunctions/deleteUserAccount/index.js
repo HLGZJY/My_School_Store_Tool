@@ -18,30 +18,34 @@ module.exports = {
 
         try {
             // 删除用户的收藏记录
-            await db.collection('collections').where({ openid }).remove();
-            console.log('删除收藏记录成功');
+            const collectionsRes = await db.collection('collections').where({ openid }).remove();
+            console.log('删除收藏记录:', collectionsRes);
 
             // 删除用户的阅读历史
-            await db.collection('readHistory').where({ openid }).remove();
-            console.log('删除阅读历史成功');
+            const historyRes = await db.collection('readHistory').where({ openid }).remove();
+            console.log('删除阅读历史:', historyRes);
 
             // 删除用户的搜索历史
-            await db.collection('searchHistory').where({ openid }).remove();
-            console.log('删除搜索历史成功');
+            const searchRes = await db.collection('searchHistory').where({ openid }).remove();
+            console.log('删除搜索历史:', searchRes);
 
             // 删除用户的消息通知
-            await db.collection('messages').where({ openid }).remove();
-            console.log('删除消息通知成功');
+            const messagesRes = await db.collection('messages').where({ openid }).remove();
+            console.log('删除消息通知:', messagesRes);
 
             // 删除用户的订阅记录
-            await db.collection('subscriptions').where({ openid }).remove();
-            console.log('删除订阅记录成功');
+            const subsRes = await db.collection('subscriptions').where({ openid }).remove();
+            console.log('删除订阅记录:', subsRes);
 
-            // 最后删除用户表中的用户记录
-            const userRes = await db.collection('users').where({ openid }).get();
+            // 删除用户表中的用户记录
+            const userRes = await db.collection('users').where({ openid: openid }).get();
+            console.log('查询用户记录:', userRes);
             if (userRes.data && userRes.data.length > 0) {
-                await db.collection('users').doc(userRes.data[0]._id).remove();
-                console.log('删除用户记录成功');
+                const userDocId = userRes.data[0]._id;
+                await db.collection('users').doc(userDocId).remove();
+                console.log('删除用户记录成功, _id:', userDocId);
+            } else {
+                console.log('未找到用户记录');
             }
 
             console.log('账号注销成功');
