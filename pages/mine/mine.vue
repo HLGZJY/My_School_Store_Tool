@@ -8,8 +8,6 @@
         />
 
         <StatsCard
-            :collectCount="stats.collectCount"
-            :readCount="stats.readCount"
             @click="goToPage"
         />
 
@@ -40,7 +38,6 @@ export default {
     components: { UserCard, StatsCard, MenuList },
     data: () => ({
         userInfo: {},
-        stats: { collectCount: 0, readCount: 0 },
         unreadCount: 0
     }),
     onLoad() {
@@ -66,7 +63,6 @@ export default {
                 });
                 if (res.result.code === 0) {
                     this.userInfo = res.result.data;
-                    this.stats = res.result.data.stats || {};
                 }
             } catch (e) {
                 console.error('加载用户信息失败:', e);

@@ -37,7 +37,6 @@ module.exports = {
                     avatar: userData.avatar,
                     role: userData.role,
                     roleDetail: userData.roleDetail,
-                    stats: userData.stats || { collectCount: 0, readCount: 0 },
                     settings: userData.settings,
                     createTime: userData.createTime,
                     lastLoginTime: userData.lastLoginTime

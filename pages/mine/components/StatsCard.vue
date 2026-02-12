@@ -1,24 +1,18 @@
 <template>
     <view class="stats-card">
         <view class="stat-item" @click="$emit('click', 'collect')">
-            <text class="value">{{ collectCount }}</text>
             <text class="label">收藏</text>
         </view>
         <view class="divider"></view>
         <view class="stat-item" @click="$emit('click', 'read')">
-            <text class="value">{{ readCount }}</text>
-            <text class="label">阅读</text>
+            <text class="label">阅读历史</text>
         </view>
     </view>
 </template>
 
 <script>
 export default {
-    name: 'StatsCard',
-    props: {
-        collectCount: { type: Number, default: 0 },
-        readCount: { type: Number, default: 0 }
-    }
+    name: 'StatsCard'
 };
 </script>
 
@@ -32,17 +26,10 @@ export default {
         flex: 1;
         text-align: center;
 
-        .value {
-            display: block;
-            font-size: 24px;
-            font-weight: 600;
-            color: #0A2540;
-            margin-bottom: 4px;
-        }
-
         .label {
-            font-size: 13px;
-            color: #A0AEC0;
+            font-size: 14px;
+            font-weight: 500;
+            color: #4A5568;
         }
     }
 
