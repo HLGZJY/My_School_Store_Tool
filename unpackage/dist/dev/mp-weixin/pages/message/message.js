@@ -1,5 +1,6 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const utils_cache = require("../../utils/cache.js");
 const _sfc_main = {
   data() {
     return {
@@ -23,11 +24,25 @@ const _sfc_main = {
     this.loadMessages();
   },
   methods: {
-    async loadMessages() {
+    async loadMessages(forceRefresh = false) {
       if (this.loading)
         return;
       this.loading = true;
       try {
+        if (this.page === 1 && !forceRefresh) {
+          const cached = utils_cache.loadWithCache("message_list", "MESSAGE", async () => {
+            return null;
+          });
+          if (cached !== null) {
+            const cacheData = await utils_cache.loadWithCache("message_list", "MESSAGE", async () => null);
+            if (cacheData && cacheData.messages) {
+              this.messages = cacheData.messages;
+              this.hasMore = cacheData.hasMore;
+              this.loading = false;
+              return;
+            }
+          }
+        }
         const openid = common_vendor.index.getStorageSync("userId");
         const res = await common_vendor.Vs.callFunction({
           name: "getMessages",
@@ -41,6 +56,9 @@ const _sfc_main = {
         if (res.result.code === 0) {
           const { messages, hasMore } = res.result.data;
           if (this.page === 1) {
+            utils_cache.clearCache("message_list");
+            const { clearCache: _, ...cacheData } = { messages, hasMore };
+            common_vendor.index.setStorageSync("cache_message_list", { time: Date.now(), data: cacheData });
             this.messages = messages;
           } else {
             this.messages = [...this.messages, ...messages];

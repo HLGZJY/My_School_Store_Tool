@@ -1,5 +1,6 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const utils_cache = require("../../utils/cache.js");
 const HotRanking = () => "./components/HotRanking.js";
 const TagCloud = () => "./components/TagCloud.js";
 const Timeline = () => "./components/Timeline.js";
@@ -30,7 +31,7 @@ const _sfc_main = {
   methods: {
     // 加载热门排行
     async loadHotRanking() {
-      try {
+      const data = await utils_cache.loadWithCache("discover_hot", "DISCOVER", async () => {
         const res = await common_vendor.Vs.callFunction({
           name: "getHotArticles",
           data: {
@@ -39,18 +40,15 @@ const _sfc_main = {
           }
         });
         if (res.result.code === 0) {
-          console.log("热门排行数据:", res.result.data);
-          this.ranking = res.result.data || [];
-        } else {
-          console.error("热门排行错误:", res.result.message);
+          return res.result.data || [];
         }
-      } catch (error) {
-        console.error("加载热门排行失败:", error);
-      }
+        return [];
+      });
+      this.ranking = data;
     },
     // 加载标签云
     async loadTagCloud() {
-      try {
+      const data = await utils_cache.loadWithCache("discover_tags", "DISCOVER", async () => {
         const res = await common_vendor.Vs.callFunction({
           name: "getTagCloud",
           data: {
@@ -58,30 +56,24 @@ const _sfc_main = {
           }
         });
         if (res.result.code === 0) {
-          console.log("标签云数据:", res.result.data);
-          this.tags = res.result.data || [];
-        } else {
-          console.error("标签云错误:", res.result.message);
+          return res.result.data || [];
         }
-      } catch (error) {
-        console.error("加载标签云失败:", error);
-      }
+        return [];
+      });
+      this.tags = data;
     },
     // 加载时间轴
     async loadTimeline() {
-      try {
+      const data = await utils_cache.loadWithCache("discover_timeline", "DISCOVER", async () => {
         const res = await common_vendor.Vs.callFunction({
           name: "getTimeline"
         });
         if (res.result.code === 0) {
-          console.log("时间轴数据:", res.result.data);
-          this.timeline = res.result.data || [];
-        } else {
-          console.error("时间轴错误:", res.result.message);
+          return res.result.data || [];
         }
-      } catch (error) {
-        console.error("加载时间轴失败:", error);
-      }
+        return [];
+      });
+      this.timeline = data;
     },
     // 加载时间轴文章
     async loadTimelineArticles(timelineItem) {

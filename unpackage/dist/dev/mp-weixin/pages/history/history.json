@@ -3,5 +3,7 @@
   "enablePullDownRefresh": true,
   "navigationBarBackgroundColor": "#FFFFFF",
   "navigationBarTextStyle": "black",
-  "usingComponents": {}
+  "usingComponents": {
+    "filter-panel": "../../components/FilterPanel"
+  }
 }

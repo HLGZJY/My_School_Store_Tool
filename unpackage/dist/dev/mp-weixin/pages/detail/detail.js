@@ -1,12 +1,14 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const utils_cache = require("../../utils/cache.js");
 const _sfc_main = {
   data() {
     return {
       articleId: "",
       article: {},
       relatedArticles: [],
-      isCollected: false
+      isCollected: false,
+      loading: true
     };
   },
   onLoad(options) {
@@ -21,7 +23,9 @@ const _sfc_main = {
   },
   methods: {
     async loadArticleDetail() {
-      try {
+      this.loading = true;
+      const cacheKey = `detail_${this.articleId}`;
+      const data = await utils_cache.loadWithCache(cacheKey, "DETAIL", async () => {
         const res = await common_vendor.Vs.callFunction({
           name: "getArticleDetail",
           data: {
@@ -29,17 +33,21 @@ const _sfc_main = {
           }
         });
         if (res.result.code === 0) {
-          this.article = res.result.data;
-          this.relatedArticles = res.result.data.relatedArticles || [];
-          console.log("文章详情加载成功:", this.article._id);
+          return res.result.data;
         }
-      } catch (error) {
-        console.error("加载文章详情失败:", error);
+        return null;
+      });
+      if (data) {
+        this.article = data;
+        this.relatedArticles = data.relatedArticles || [];
+        console.log("文章详情加载成功:", this.article._id);
+      } else {
         common_vendor.index.showToast({
           title: "加载失败",
           icon: "none"
         });
       }
+      this.loading = false;
     },
     async loadCollectStatus() {
       try {
@@ -185,30 +193,32 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       color: "#0A2540"
     }),
     d: common_vendor.o((...args) => $options.share && $options.share(...args)),
-    e: common_vendor.t($data.article.title),
-    f: common_vendor.t($data.article.sourceName),
-    g: common_vendor.t($options.formatTime($data.article.publishTime)),
-    h: common_vendor.t(((_a = $data.article.stats) == null ? void 0 : _a.viewCount) || 0),
-    i: common_vendor.f(((_b = $data.article.tags) == null ? void 0 : _b.source) || [], (tag, k0, i0) => {
+    e: $data.loading
+  }, $data.loading ? {} : common_vendor.e({
+    f: common_vendor.t($data.article.title),
+    g: common_vendor.t($data.article.sourceName),
+    h: common_vendor.t($options.formatTime($data.article.publishTime)),
+    i: common_vendor.t(((_a = $data.article.stats) == null ? void 0 : _a.viewCount) || 0),
+    j: common_vendor.f(((_b = $data.article.tags) == null ? void 0 : _b.source) || [], (tag, k0, i0) => {
       return {
         a: common_vendor.t(tag),
         b: tag
       };
     }),
-    j: common_vendor.f(((_c = $data.article.tags) == null ? void 0 : _c.role) || [], (tag, k0, i0) => {
+    k: common_vendor.f(((_c = $data.article.tags) == null ? void 0 : _c.role) || [], (tag, k0, i0) => {
       return {
         a: common_vendor.t(tag),
         b: tag
       };
     }),
-    k: $data.article.summary
+    l: $data.article.summary
   }, $data.article.summary ? {
-    l: common_vendor.t($data.article.summary)
+    m: common_vendor.t($data.article.summary)
   } : {}, {
-    m: $data.article.content,
-    n: $data.relatedArticles.length > 0
+    n: $data.article.content,
+    o: $data.relatedArticles.length > 0
   }, $data.relatedArticles.length > 0 ? {
-    o: common_vendor.f($data.relatedArticles, (item, k0, i0) => {
+    p: common_vendor.f($data.relatedArticles, (item, k0, i0) => {
       return {
         a: common_vendor.t(item.title),
         b: common_vendor.t(item.sourceName),
@@ -217,18 +227,18 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         e: common_vendor.o(($event) => $options.goToArticle(item._id), item._id)
       };
     })
-  } : {}, {
-    p: common_vendor.p({
+  } : {}), {
+    q: common_vendor.p({
       type: $data.isCollected ? "heart-filled" : "heart",
       size: "22",
       color: $data.isCollected ? "#EF4444" : "#A0AEC0"
     }),
-    q: common_vendor.t($data.isCollected ? "已收藏" : "收藏"),
-    r: $data.isCollected ? 1 : "",
-    s: common_vendor.o((...args) => $options.toggleCollect && $options.toggleCollect(...args)),
-    t: $data.article.originalUrl
+    r: common_vendor.t($data.isCollected ? "已收藏" : "收藏"),
+    s: $data.isCollected ? 1 : "",
+    t: common_vendor.o((...args) => $options.toggleCollect && $options.toggleCollect(...args)),
+    v: $data.article.originalUrl
   }, $data.article.originalUrl ? {
-    v: common_vendor.o((...args) => $options.openOriginal && $options.openOriginal(...args))
+    w: common_vendor.o((...args) => $options.openOriginal && $options.openOriginal(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-eca06f3c"]]);

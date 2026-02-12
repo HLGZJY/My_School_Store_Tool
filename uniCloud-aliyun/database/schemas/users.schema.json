@@ -36,10 +36,13 @@
 			"bsonType": "object",
 			"description": "角色详情",
 			"properties": {
-				"major": { "bsonType": "string", "description": "专业" },
+				"college": { "bsonType": "string", "description": "学院" },
 				"grade": { "bsonType": "string", "description": "年级" },
-				"department": { "bsonType": "string", "description": "院系" },
-				"title": { "bsonType": "string", "description": "职称" }
+				"interests": {
+					"bsonType": "array",
+					"description": "兴趣标签"
+				},
+				"department": { "bsonType": "string", "description": "院系/部门" }
 			}
 		},
 		"settings": {

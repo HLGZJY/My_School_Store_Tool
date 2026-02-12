@@ -6,6 +6,14 @@
             <text class="placeholder">搜索通知、讲座、活动...</text>
         </view>
 
+        <!-- 筛选面板 -->
+        <FilterPanel
+            :sources="sources"
+            :tags="tagOptions"
+            @filterChange="onFilterChange"
+            ref="filterRef"
+        />
+
         <!-- 分类Tab -->
         <scroll-view class="tab-scroll" scroll-x :show-scrollbar="false">
             <view class="tab-list">
@@ -106,10 +114,12 @@
 
 <script>
 import ArticleCard from '@/components/ArticleCard.vue';
+import FilterPanel from '@/components/FilterPanel.vue';
 
 export default {
     components: {
-        ArticleCard
+        ArticleCard,
+        FilterPanel
     },
     data() {
         return {
@@ -129,6 +139,24 @@ export default {
             hasMore: true,
             refresherTriggered: false,
 
+            // 筛选条件
+            filterSourceId: '',
+            filterTag: '',
+            filterTimeRange: '',
+
+            // 数据源配置
+            sources: [
+                { id: 'jwc', name: '教务处' },
+                { id: 'library', name: '图书馆' },
+                { id: 'xsc', name: '学生处' },
+                { id: 'cs', name: '计算机学院' },
+                { id: 'jyzd', name: '就业指导中心' },
+                { id: 'yjs', name: '研究生院' },
+                { id: 'kjc', name: '科技处' },
+                { id: 'rsc', name: '人事处' }
+            ],
+            tagOptions: ['通知', '讲座', '活动', '竞赛', '讲座预告', '考试通知', '比赛', '招聘'],
+
             // 滚动位置记录
             scrollPositions: {},
 
@@ -142,6 +170,7 @@ export default {
         };
     },
     onLoad() {
+        this.loadSources();
         this.loadArticles();
         this.loadRecommendations();
     },
@@ -150,13 +179,70 @@ export default {
         this.refreshCollectionStatus();
     },
     methods: {
+        // 加载数据源
+        async loadSources() {
+            try {
+                const res = await uniCloud.callFunction({
+                    name: 'getSubscribeSources'
+                });
+                if (res.result.code === 0 && res.result.data) {
+                    this.sources = res.result.data.map(s => ({
+                        id: s.id,
+                        name: s.name
+                    }));
+                }
+            } catch (e) {
+                console.error('加载数据源失败:', e);
+            }
+        },
+        // 筛选变化
+        onFilterChange(filters) {
+            this.filterSourceId = filters.sourceId;
+            this.filterTag = filters.tag;
+            this.filterTimeRange = filters.timeRange;
+            this.page = 1;
+            this.hasMore = true;
+            this.articleList = [];
+            this.loadArticles(true);
+        },
+        // 获取时间范围
+        getTimeRangeFilter() {
+            if (!this.filterTimeRange) return {};
+            const now = Date.now();
+            const ranges = {
+                '1d': 1 * 24 * 60 * 60 * 1000,
+                '7d': 7 * 24 * 60 * 60 * 1000,
+                '30d': 30 * 24 * 60 * 60 * 1000
+            };
+            const days = ranges[this.filterTimeRange] || 0;
+            if (days === 0) return {}; // 'all' 不过滤时间
+            return {
+                startTime: now - days,
+                endTime: now
+            };
+        },
         // 加载文章列表
         async loadArticles(isRefresh = false) {
-            if (this.loading) return;
+            // 防止重复请求
+            if (isRefresh) {
+                // 下拉刷新时，直接停止刷新动画并重置状态
+                this.refresherTriggered = false
+                // 延迟重置，避免立即触发新的刷新
+                setTimeout(() => {
+                    this.refresherTriggered = false
+                }, 10)
+            }
+            if (this.loading && !isRefresh) return;
 
-            this.loading = true;
+            this.loading = !isRefresh; // 下拉刷新时不显示底部加载状态
+            if (isRefresh) {
+                this.refresherTriggered = true;
+            }
             const category = this.tabs[this.currentTab].category;
             const userRole = uni.getStorageSync('userRole') || 'student';
+
+            // 构建筛选参数
+            const timeFilter = this.getTimeRangeFilter();
 
             try {
                 const res = await uniCloud.callFunction({
@@ -165,7 +251,11 @@ export default {
                         page: this.page,
                         pageSize: this.pageSize,
                         category,
-                        userRole
+                        userRole,
+                        sourceId: this.filterSourceId,
+                        tag: this.filterTag,
+                        startDate: timeFilter.startTime || 0,
+                        endDate: timeFilter.endTime || 0
                     }
                 });
 
@@ -210,8 +300,11 @@ export default {
                     icon: 'none'
                 });
             } finally {
-                this.loading = false;
-                this.refresherTriggered = false;
+                // 延迟清除刷新状态，避免闪烁
+                setTimeout(() => {
+                    this.loading = false;
+                    this.refresherTriggered = false;
+                }, 100);
             }
         },
 

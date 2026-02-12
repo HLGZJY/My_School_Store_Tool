@@ -4,10 +4,7 @@ const db = uniCloud.database();
 
 module.exports = {
     async main(event) {
-        const { userId: openid, page = 1, pageSize = 20 } = event;
-
-        console.log('=== getReadingHistory ===');
-        console.log('openid:', openid, 'page:', page, 'pageSize:', pageSize);
+        const { userId: openid, sourceId, page = 1, pageSize = 20 } = event;
 
         try {
             if (!openid) {
@@ -21,18 +18,43 @@ module.exports = {
             const collection = db.collection('readHistory');
 
             // 查询该用户的阅读历史
-            const res = await collection
-                .where({ openid: openid })
-                .orderBy('readTime', 'desc')
-                .skip((page - 1) * pageSize)
-                .limit(pageSize)
-                .get();
+            let query = { openid: openid };
+            let res, countRes;
 
-            // 计算总数
-            const countRes = await collection.where({ openid: openid }).count();
+            if (sourceId) {
+                // 如果指定来源，需要先获取所有数据再过滤
+                const allRes = await collection
+                    .where({ openid: openid })
+                    .orderBy('readTime', 'desc')
+                    .get();
+
+                // 过滤来源
+                let filteredData = allRes.data;
+                if (sourceId) {
+                    filteredData = filteredData.filter(h =>
+                        h.article && h.article.sourceId === sourceId
+                    );
+                }
+
+                // 分页
+                const startIndex = (page - 1) * pageSize;
+                const paginatedData = filteredData.slice(startIndex, startIndex + pageSize);
+
+                res = { data: paginatedData };
+                countRes = { total: filteredData.length };
+            } else {
+                // 无来源筛选，直接查询
+                res = await collection
+                    .where({ openid: openid })
+                    .orderBy('readTime', 'desc')
+                    .skip((page - 1) * pageSize)
+                    .limit(pageSize)
+                    .get();
+
+                countRes = await collection.where({ openid: openid }).count();
+            }
+
             const total = countRes.total;
-
-            console.log('查询到阅读历史:', res.data.length, '总条数:', total);
 
             return {
                 code: 0,

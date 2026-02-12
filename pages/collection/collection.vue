@@ -17,6 +17,14 @@
             </scroll-view>
         </view>
 
+        <!-- 筛选面板 -->
+        <FilterPanel
+            :sources="sources"
+            :showTag="false"
+            :showTime="false"
+            @filterChange="onFilterChange"
+        />
+
         <!-- 收藏列表 -->
         <scroll-view class="content" scroll-y @scrolltolower="loadMore">
             <view v-if="collections.length > 0">
@@ -57,7 +65,13 @@
 </template>
 
 <script>
+import { loadWithCache, clearCache } from '@/utils/cache.js'
+import FilterPanel from '@/components/FilterPanel.vue'
+
 export default {
+    components: {
+        FilterPanel
+    },
     data() {
         return {
             categories: [
@@ -71,7 +85,19 @@ export default {
             collections: [],
             page: 1,
             hasMore: true,
-            loading: false
+            loading: false,
+
+            // 筛选条件
+            filterSourceId: '',
+
+            // 数据源配置
+            sources: [
+                { id: 'jwc', name: '教务处' },
+                { id: 'library', name: '图书馆' },
+                { id: 'xsc', name: '学生处' },
+                { id: 'cs', name: '计算机学院' },
+                { id: 'jyzd', name: '就业指导中心' }
+            ]
         }
     },
     computed: {
@@ -83,14 +109,18 @@ export default {
         },
         selectedIds() {
             return this.collections.filter(item => item.selected).map(item => item.articleId)
+        },
+        cacheKey() {
+            return `collection_${this.categories[this.currentCategory].category}_${this.filterSourceId}`
         }
     },
     onLoad() {
+        this.loadSources()
         this.loadCollections()
         uni.$on('collectChange', this.onCollectChange)
     },
     onShow() {
-        // 从详情页返回时刷新列表
+        // 从详情页返回时刷新列表（但使用缓存）
         this.loadCollections(true)
     },
     onUnload() {
@@ -102,11 +132,53 @@ export default {
         this.loadCollections(true)
     },
     methods: {
-        async loadCollections(refresh = false) {
-            if (this.loading) return
-            this.loading = true
+        // 加载数据源
+        async loadSources() {
+            try {
+                const res = await uniCloud.callFunction({
+                    name: 'getSubscribeSources'
+                });
+                if (res.result.code === 0 && res.result.data) {
+                    this.sources = res.result.data.map(s => ({
+                        id: s.id,
+                        name: s.name
+                    }));
+                }
+            } catch (e) {
+                console.error('加载数据源失败:', e);
+            }
+        },
+        // 筛选变化
+        onFilterChange(filters) {
+            this.filterSourceId = filters.sourceId;
+            this.page = 1;
+            this.hasMore = true;
+            this.collections = [];
+            this.loadCollections(true);
+        },
+        async loadCollections(forceRefresh = false) {
+            // 防止重复请求
+            if (forceRefresh) {
+                uni.stopPullDownRefresh()
+                setTimeout(() => uni.stopPullDownRefresh(), 10)
+            }
+            if (this.loading && !forceRefresh) return
+
+            this.loading = !forceRefresh
 
             try {
+                // 只有第一页使用缓存
+                if (this.page === 1 && !forceRefresh) {
+                    const cached = await loadWithCache(this.cacheKey, 'COLLECTION', async () => null)
+                    if (cached) {
+                        this.collections = cached.collections || []
+                        this.hasMore = cached.hasMore !== false
+                        this.loading = false
+                        setTimeout(() => uni.stopPullDownRefresh(), 100)
+                        return
+                    }
+                }
+
                 const openid = uni.getStorageSync('userId')
                 const category = this.categories[this.currentCategory].category
 
@@ -115,6 +187,7 @@ export default {
                     data: {
                         userId: openid,
                         category,
+                        sourceId: this.filterSourceId,
                         page: this.page,
                         pageSize: 20
                     }
@@ -128,7 +201,11 @@ export default {
                         selected: false
                     }))
 
-                    if (refresh || this.page === 1) {
+                    if (this.page === 1) {
+                        // 缓存第一页
+                        clearCache(this.cacheKey)
+                        const cacheData = { collections: collectionsWithSelected, hasMore }
+                        uni.setStorageSync(`cache_${this.cacheKey}`, { time: Date.now(), data: cacheData })
                         this.collections = collectionsWithSelected
                     } else {
                         this.collections = [...this.collections, ...collectionsWithSelected]

@@ -4,10 +4,7 @@ const db = uniCloud.database();
 
 module.exports = {
     async main(event) {
-        const { userId: openid, articleId, category, page = 1, pageSize = 10 } = event;
-
-        console.log('=== getCollections ===');
-        console.log('openid:', openid, 'articleId:', articleId, 'category:', category, 'page:', page, 'pageSize:', pageSize);
+        const { userId: openid, articleId, category, sourceId, page = 1, pageSize = 10 } = event;
 
         try {
             // 方案A：使用 openid 直接查询
@@ -20,14 +17,21 @@ module.exports = {
                 query.articleId = articleId;
             }
 
-            // 获取所有收藏（不分页，用于统计总数）
+            // 获取所有收藏
             let allCollections = await collection.where(query).get();
             let filteredCollections = allCollections.data;
 
-            // 如果指定了分类，需要过滤
+            // 分类筛选
             if (category) {
                 filteredCollections = filteredCollections.filter(c =>
                     c.article && c.article.category === category
+                );
+            }
+
+            // 来源筛选
+            if (sourceId) {
+                filteredCollections = filteredCollections.filter(c =>
+                    c.article && c.article.sourceId === sourceId
                 );
             }
 
@@ -37,8 +41,6 @@ module.exports = {
             // 分页
             const startIndex = (page - 1) * pageSize;
             const paginatedCollections = filteredCollections.slice(startIndex, startIndex + pageSize);
-
-            console.log('查询到收藏数量:', paginatedCollections.length, '总条数:', total);
 
             return {
                 code: 0,

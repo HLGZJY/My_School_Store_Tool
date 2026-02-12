@@ -4,18 +4,45 @@ const db = uniCloud.database();
 
 module.exports = {
     async main(event) {
-        const { keyword = '', page = 1, pageSize = 20 } = event;
+        const {
+            keyword = '',
+            page = 1,
+            pageSize = 20,
+            sourceId = '',
+            tag = '',
+            startDate = 0,
+            endDate = 0
+        } = event;
 
         try {
             // 构建查询条件
-            // 临时：不检查status，确保测试数据能显示
             let whereCondition = {};
 
-            // 关键词搜索（标题和摘要）
+            // 关键词搜索（标题）
             if (keyword.trim()) {
-                whereCondition = {
-                    title: new RegExp(keyword, 'i')
-                };
+                whereCondition.title = new RegExp(keyword, 'i');
+            }
+
+            // 来源筛选
+            if (sourceId) {
+                whereCondition.sourceId = sourceId;
+            }
+
+            // 标签筛选
+            if (tag) {
+                whereCondition['tags.source'] = tag;
+            }
+
+            // 时间范围筛选
+            if (startDate > 0 && endDate > 0) {
+                whereCondition.publishTime = db.command.and(
+                    db.command.gte(startDate),
+                    db.command.lte(endDate)
+                );
+            } else if (startDate > 0) {
+                whereCondition.publishTime = db.command.gte(startDate);
+            } else if (endDate > 0) {
+                whereCondition.publishTime = db.command.lte(endDate);
             }
 
             // 查询数据库
@@ -28,13 +55,11 @@ module.exports = {
                 .limit(pageSize)
                 .get();
 
-            console.log('searchArticles: 关键词=', keyword, '查询到数量=', res.data.length);
-
             // 计算总数
             const countRes = await collection.where(whereCondition).count();
             const total = countRes.total;
 
-            // 返回完整数据，包含前端需要的 sourceName 和 publishTime
+            // 返回完整数据
             const articles = res.data.map(item => ({
                 _id: item._id,
                 title: item.title,
@@ -43,8 +68,6 @@ module.exports = {
                 publishTime: item.publishTime,
                 category: item.category
             }));
-
-            console.log('searchArticles: 返回数据示例', articles[0]);
 
             return {
                 code: 0,

@@ -1,9 +1,11 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const ArticleCard = () => "../../components/ArticleCard.js";
+const FilterPanel = () => "../../components/FilterPanel.js";
 const _sfc_main = {
   components: {
-    ArticleCard
+    ArticleCard,
+    FilterPanel
   },
   data() {
     return {
@@ -22,6 +24,22 @@ const _sfc_main = {
       loading: false,
       hasMore: true,
       refresherTriggered: false,
+      // 筛选条件
+      filterSourceId: "",
+      filterTag: "",
+      filterTimeRange: "",
+      // 数据源配置
+      sources: [
+        { id: "jwc", name: "教务处" },
+        { id: "library", name: "图书馆" },
+        { id: "xsc", name: "学生处" },
+        { id: "cs", name: "计算机学院" },
+        { id: "jyzd", name: "就业指导中心" },
+        { id: "yjs", name: "研究生院" },
+        { id: "kjc", name: "科技处" },
+        { id: "rsc", name: "人事处" }
+      ],
+      tagOptions: ["通知", "讲座", "活动", "竞赛", "讲座预告", "考试通知", "比赛", "招聘"],
       // 滚动位置记录
       scrollPositions: {},
       // 左滑收藏相关
@@ -35,6 +53,7 @@ const _sfc_main = {
     };
   },
   onLoad() {
+    this.loadSources();
     this.loadArticles();
     this.loadRecommendations();
   },
@@ -42,13 +61,67 @@ const _sfc_main = {
     this.refreshCollectionStatus();
   },
   methods: {
+    // 加载数据源
+    async loadSources() {
+      try {
+        const res = await common_vendor.Vs.callFunction({
+          name: "getSubscribeSources"
+        });
+        if (res.result.code === 0 && res.result.data) {
+          this.sources = res.result.data.map((s) => ({
+            id: s.id,
+            name: s.name
+          }));
+        }
+      } catch (e) {
+        console.error("加载数据源失败:", e);
+      }
+    },
+    // 筛选变化
+    onFilterChange(filters) {
+      this.filterSourceId = filters.sourceId;
+      this.filterTag = filters.tag;
+      this.filterTimeRange = filters.timeRange;
+      this.page = 1;
+      this.hasMore = true;
+      this.articleList = [];
+      this.loadArticles(true);
+    },
+    // 获取时间范围
+    getTimeRangeFilter() {
+      if (!this.filterTimeRange)
+        return {};
+      const now = Date.now();
+      const ranges = {
+        "1d": 1 * 24 * 60 * 60 * 1e3,
+        "7d": 7 * 24 * 60 * 60 * 1e3,
+        "30d": 30 * 24 * 60 * 60 * 1e3
+      };
+      const days = ranges[this.filterTimeRange] || 0;
+      if (days === 0)
+        return {};
+      return {
+        startTime: now - days,
+        endTime: now
+      };
+    },
     // 加载文章列表
     async loadArticles(isRefresh = false) {
-      if (this.loading)
+      if (isRefresh) {
+        this.refresherTriggered = false;
+        setTimeout(() => {
+          this.refresherTriggered = false;
+        }, 10);
+      }
+      if (this.loading && !isRefresh)
         return;
-      this.loading = true;
+      this.loading = !isRefresh;
+      if (isRefresh) {
+        this.refresherTriggered = true;
+      }
       const category = this.tabs[this.currentTab].category;
       const userRole = common_vendor.index.getStorageSync("userRole") || "student";
+      const timeFilter = this.getTimeRangeFilter();
       try {
         const res = await common_vendor.Vs.callFunction({
           name: "getArticles",
@@ -56,7 +129,11 @@ const _sfc_main = {
             page: this.page,
             pageSize: this.pageSize,
             category,
-            userRole
+            userRole,
+            sourceId: this.filterSourceId,
+            tag: this.filterTag,
+            startDate: timeFilter.startTime || 0,
+            endDate: timeFilter.endTime || 0
           }
         });
         if (res.result.code === 0) {
@@ -97,8 +174,10 @@ const _sfc_main = {
           icon: "none"
         });
       } finally {
-        this.loading = false;
-        this.refresherTriggered = false;
+        setTimeout(() => {
+          this.loading = false;
+          this.refresherTriggered = false;
+        }, 100);
       }
     },
     // 加载推荐文章
@@ -271,8 +350,9 @@ const _sfc_main = {
 };
 if (!Array) {
   const _component_uni_icons = common_vendor.resolveComponent("uni-icons");
+  const _component_FilterPanel = common_vendor.resolveComponent("FilterPanel");
   const _component_ArticleCard = common_vendor.resolveComponent("ArticleCard");
-  (_component_uni_icons + _component_ArticleCard)();
+  (_component_uni_icons + _component_FilterPanel + _component_ArticleCard)();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
@@ -282,7 +362,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       color: "#A0AEC0"
     }),
     b: common_vendor.o((...args) => $options.goToSearch && $options.goToSearch(...args)),
-    c: common_vendor.f($data.tabs, (tab, index, i0) => {
+    c: common_vendor.sr("filterRef", "1cf27b2a-1"),
+    d: common_vendor.o($options.onFilterChange),
+    e: common_vendor.p({
+      sources: $data.sources,
+      tags: $data.tagOptions
+    }),
+    f: common_vendor.f($data.tabs, (tab, index, i0) => {
       return {
         a: common_vendor.t(tab.name),
         b: index,
@@ -290,14 +376,14 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: common_vendor.o(($event) => $options.onTabChange(index), index)
       };
     }),
-    d: $data.currentTab === 0 && $data.recommendations.length > 0
+    g: $data.currentTab === 0 && $data.recommendations.length > 0
   }, $data.currentTab === 0 && $data.recommendations.length > 0 ? {
-    e: common_vendor.p({
+    h: common_vendor.p({
       type: "light",
       size: "16",
       color: "#00D4AA"
     }),
-    f: common_vendor.f($data.recommendations, (item, k0, i0) => {
+    i: common_vendor.f($data.recommendations, (item, k0, i0) => {
       return {
         a: common_vendor.t(item.title),
         b: common_vendor.t(item.sourceName),
@@ -306,9 +392,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : {}, {
-    g: common_vendor.f($data.articleList, (article, index, i0) => {
+    j: common_vendor.f($data.articleList, (article, index, i0) => {
       return {
-        a: "1cf27b2a-2-" + i0,
+        a: "1cf27b2a-3-" + i0,
         b: common_vendor.p({
           type: article.isCollected ? "star-filled" : "star",
           size: "20",
@@ -318,7 +404,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: article.isCollected ? 1 : "",
         e: common_vendor.o(($event) => $options.toggleCollect(article, index), article._id),
         f: $data.swipeShowIndex === index ? 1 : "",
-        g: "1cf27b2a-3-" + i0,
+        g: "1cf27b2a-4-" + i0,
         h: common_vendor.p({
           article
         }),
@@ -329,12 +415,12 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         m: common_vendor.o(($event) => $options.goToDetail(article), article._id)
       };
     }),
-    h: $data.loading
+    k: $data.loading
   }, $data.loading ? {} : !$data.hasMore && $data.articleList.length > 0 ? {} : $data.articleList.length === 0 ? {} : {}, {
-    i: !$data.hasMore && $data.articleList.length > 0,
-    j: $data.articleList.length === 0,
-    k: common_vendor.o((...args) => $options.onRefresh && $options.onRefresh(...args)),
-    l: common_vendor.o((...args) => $options.onLoadMore && $options.onLoadMore(...args))
+    l: !$data.hasMore && $data.articleList.length > 0,
+    m: $data.articleList.length === 0,
+    n: common_vendor.o((...args) => $options.onRefresh && $options.onRefresh(...args)),
+    o: common_vendor.o((...args) => $options.onLoadMore && $options.onLoadMore(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-1cf27b2a"]]);

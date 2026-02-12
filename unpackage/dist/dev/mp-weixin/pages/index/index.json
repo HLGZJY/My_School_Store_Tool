@@ -4,6 +4,7 @@
   "navigationBarBackgroundColor": "#FFFFFF",
   "navigationBarTextStyle": "black",
   "usingComponents": {
-    "article-card": "../../components/ArticleCard"
+    "article-card": "../../components/ArticleCard",
+    "filter-panel": "../../components/FilterPanel"
   }
 }

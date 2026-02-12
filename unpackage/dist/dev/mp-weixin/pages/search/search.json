@@ -5,6 +5,7 @@
   "usingComponents": {
     "search-header": "./components/SearchHeader",
     "search-suggest": "./components/SearchSuggest",
-    "search-result": "./components/SearchResult"
+    "search-result": "./components/SearchResult",
+    "filter-panel": "../../components/FilterPanel"
   }
 }

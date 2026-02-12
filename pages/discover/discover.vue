@@ -37,6 +37,7 @@ import HotRanking from './components/HotRanking.vue'
 import TagCloud from './components/TagCloud.vue'
 import Timeline from './components/Timeline.vue'
 import SubscribeManager from './components/SubscribeManager.vue'
+import { loadWithCache } from '@/utils/cache.js'
 
 export default {
     name: 'Discover',
@@ -64,7 +65,7 @@ export default {
     methods: {
         // 加载热门排行
         async loadHotRanking() {
-            try {
+            const data = await loadWithCache('discover_hot', 'DISCOVER', async () => {
                 const res = await uniCloud.callFunction({
                     name: 'getHotArticles',
                     data: {
@@ -72,55 +73,43 @@ export default {
                         limit: 5
                     }
                 })
-
                 if (res.result.code === 0) {
-                    console.log('热门排行数据:', res.result.data)
-                    this.ranking = res.result.data || []
-                } else {
-                    console.error('热门排行错误:', res.result.message)
+                    return res.result.data || []
                 }
-            } catch (error) {
-                console.error('加载热门排行失败:', error)
-            }
+                return []
+            })
+            this.ranking = data
         },
 
         // 加载标签云
         async loadTagCloud() {
-            try {
+            const data = await loadWithCache('discover_tags', 'DISCOVER', async () => {
                 const res = await uniCloud.callFunction({
                     name: 'getTagCloud',
                     data: {
                         limit: 20
                     }
                 })
-
                 if (res.result.code === 0) {
-                    console.log('标签云数据:', res.result.data)
-                    this.tags = res.result.data || []
-                } else {
-                    console.error('标签云错误:', res.result.message)
+                    return res.result.data || []
                 }
-            } catch (error) {
-                console.error('加载标签云失败:', error)
-            }
+                return []
+            })
+            this.tags = data
         },
 
         // 加载时间轴
         async loadTimeline() {
-            try {
+            const data = await loadWithCache('discover_timeline', 'DISCOVER', async () => {
                 const res = await uniCloud.callFunction({
                     name: 'getTimeline'
                 })
-
                 if (res.result.code === 0) {
-                    console.log('时间轴数据:', res.result.data)
-                    this.timeline = res.result.data || []
-                } else {
-                    console.error('时间轴错误:', res.result.message)
+                    return res.result.data || []
                 }
-            } catch (error) {
-                console.error('加载时间轴失败:', error)
-            }
+                return []
+            })
+            this.timeline = data
         },
 
         // 加载时间轴文章

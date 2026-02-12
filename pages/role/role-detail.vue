@@ -9,12 +9,13 @@
             <!-- 学生角色详情 -->
             <view v-if="role === 'student'" class="form-section">
                 <view class="form-item">
-                    <text class="label">专业</text>
-                    <input
-                        v-model="form.major"
-                        class="input"
-                        placeholder="请输入您的专业"
-                    />
+                    <text class="label">所在学院</text>
+                    <picker mode="selector" :range="colleges" @change="onCollegeChange">
+                        <view class="picker">
+                            {{ form.college || '请选择所在学院' }}
+                            <uni-icons type="arrowdown" size="16" color="#A0AEC0"></uni-icons>
+                        </view>
+                    </picker>
                 </view>
                 <view class="form-item">
                     <text class="label">年级</text>
@@ -45,28 +46,12 @@
             <view v-if="role === 'teacher'" class="form-section">
                 <view class="form-item">
                     <text class="label">所属院系</text>
-                    <input
-                        v-model="form.department"
-                        class="input"
-                        placeholder="请输入您的院系"
-                    />
-                </view>
-                <view class="form-item">
-                    <text class="label">职称</text>
-                    <picker mode="selector" :range="titles" @change="onTitleChange">
+                    <picker mode="selector" :range="departments" @change="onDepartmentChange">
                         <view class="picker">
-                            {{ form.title || '请选择职称' }}
+                            {{ form.department || '请选择院系' }}
                             <uni-icons type="arrowdown" size="16" color="#A0AEC0"></uni-icons>
                         </view>
                     </picker>
-                </view>
-                <view class="form-item">
-                    <text class="label">研究方向</text>
-                    <input
-                        v-model="form.researchField"
-                        class="input"
-                        placeholder="请输入您的研究方向"
-                    />
                 </view>
             </view>
 
@@ -74,20 +59,12 @@
             <view v-if="role === 'admin'" class="form-section">
                 <view class="form-item">
                     <text class="label">所属部门</text>
-                    <input
-                        v-model="form.department"
-                        class="input"
-                        placeholder="请输入您的部门"
-                    />
-                </view>
-                <view class="form-item">
-                    <text class="label">职责范围</text>
-                    <textarea
-                        v-model="form.duties"
-                        class="textarea"
-                        placeholder="请输入您的职责范围"
-                        maxlength="200"
-                    />
+                    <picker mode="selector" :range="adminDepts" @change="onAdminDeptChange">
+                        <view class="picker">
+                            {{ form.department || '请选择部门' }}
+                            <uni-icons type="arrowdown" size="16" color="#A0AEC0"></uni-icons>
+                        </view>
+                    </picker>
                 </view>
             </view>
         </view>
@@ -106,26 +83,75 @@ export default {
         return {
             role: '',
             form: {
-                major: '',
+                college: '',
                 grade: '',
                 interests: [],
-                department: '',
-                title: '',
-                researchField: '',
-                duties: ''
+                department: ''
             },
             grades: ['2021级', '2022级', '2023级', '2024级'],
-            titles: ['助教', '讲师', '副教授', '教授'],
+            colleges: [
+                '信息科学技术学院',
+                '机械工程学院',
+                '经济管理学院',
+                '文法学院',
+                '外国语学院',
+                '艺术学院',
+                '理学院',
+                '建筑工程学院',
+                '材料科学与工程学院',
+                '电气工程学院',
+                '能源与动力工程学院',
+                '化学与环境工程学院',
+                '生命科学学院',
+                '马克思主义学院',
+                '体育学院',
+                '继续教育学院'
+            ],
+            departments: [
+                '信息科学技术学院',
+                '机械工程学院',
+                '经济管理学院',
+                '文法学院',
+                '外国语学院',
+                '艺术学院',
+                '理学院',
+                '建筑工程学院',
+                '材料科学与工程学院',
+                '电气工程学院',
+                '能源与动力工程学院',
+                '化学与环境工程学院',
+                '生命科学学院',
+                '马克思主义学院',
+                '体育学院',
+                '继续教育学院'
+            ],
+            adminDepts: [
+                '党委办公室',
+                '校长办公室',
+                '人事处',
+                '教务处',
+                '学生工作处',
+                '科研处',
+                '财务处',
+                '后勤管理处',
+                '保卫处',
+                '组织部',
+                '宣传部',
+                '统战部',
+                '纪委办公室',
+                '工会',
+                '团委'
+            ],
             interestTags: ['编程', '人工智能', '考研', '就业', '竞赛', '科研', '实习', '创新创业']
         }
     },
     computed: {
         isFormValid() {
             if (this.role === 'student') {
-                return this.form.major && this.form.grade && this.form.interests.length > 0
+                return this.form.college && this.form.grade && this.form.interests.length > 0
             }
             if (this.role === 'teacher') {
-                return this.form.department && this.form.title
+                return this.form.department
             }
             if (this.role === 'admin') {
                 return this.form.department
@@ -137,14 +163,18 @@ export default {
         this.role = options.role || ''
     },
     methods: {
+        onCollegeChange(e) {
+            this.form.college = this.colleges[e.detail.value]
+        },
         onGradeChange(e) {
             this.form.grade = this.grades[e.detail.value]
         },
-
-        onTitleChange(e) {
-            this.form.title = this.titles[e.detail.value]
+        onDepartmentChange(e) {
+            this.form.department = this.departments[e.detail.value]
         },
-
+        onAdminDeptChange(e) {
+            this.form.department = this.adminDepts[e.detail.value]
+        },
         toggleInterest(tag) {
             const index = this.form.interests.indexOf(tag)
             if (index > -1) {
@@ -163,20 +193,17 @@ export default {
 
                 if (this.role === 'student') {
                     roleDetail.student = {
-                        major: this.form.major,
+                        college: this.form.college,
                         grade: this.form.grade,
                         interests: this.form.interests
                     }
                 } else if (this.role === 'teacher') {
                     roleDetail.teacher = {
-                        department: this.form.department,
-                        title: this.form.title,
-                        researchField: this.form.researchField
+                        department: this.form.department
                     }
                 } else if (this.role === 'admin') {
                     roleDetail.admin = {
-                        department: this.form.department,
-                        duties: this.form.duties
+                        department: this.form.department
                     }
                 }
 

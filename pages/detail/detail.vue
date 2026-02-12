@@ -9,7 +9,16 @@
             </view>
         </view>
 
-        <scroll-view class="content" scroll-y>
+        <!-- 加载状态 -->
+        <view v-if="loading" class="loading-mask">
+            <view class="loading-content">
+                <view class="loading-spinner"></view>
+                <text class="loading-text">加载中...</text>
+            </view>
+        </view>
+
+        <!-- 内容区域 -->
+        <scroll-view v-else class="content" scroll-y>
             <!-- 文章信息 -->
             <view class="article-info">
                 <view class="title">{{ article.title }}</view>
@@ -66,13 +75,16 @@
 </template>
 
 <script>
+import { loadWithCache, clearCache } from '@/utils/cache.js'
+
 export default {
     data() {
         return {
             articleId: '',
             article: {},
             relatedArticles: [],
-            isCollected: false
+            isCollected: false,
+            loading: true
         }
     },
     onLoad(options) {
@@ -89,26 +101,32 @@ export default {
     },
     methods: {
         async loadArticleDetail() {
-            try {
+            this.loading = true
+            const cacheKey = `detail_${this.articleId}`
+            const data = await loadWithCache(cacheKey, 'DETAIL', async () => {
                 const res = await uniCloud.callFunction({
                     name: 'getArticleDetail',
                     data: {
                         articleId: this.articleId
                     }
                 })
-
                 if (res.result.code === 0) {
-                    this.article = res.result.data
-                    this.relatedArticles = res.result.data.relatedArticles || []
-                    console.log('文章详情加载成功:', this.article._id)
+                    return res.result.data
                 }
-            } catch (error) {
-                console.error('加载文章详情失败:', error)
+                return null
+            })
+
+            if (data) {
+                this.article = data
+                this.relatedArticles = data.relatedArticles || []
+                console.log('文章详情加载成功:', this.article._id)
+            } else {
                 uni.showToast({
                     title: '加载失败',
                     icon: 'none'
                 })
             }
+            this.loading = false
         },
 
         async loadCollectStatus() {
@@ -266,6 +284,47 @@ export default {
     background-color: #F7F9FA;
     display: flex;
     flex-direction: column;
+}
+
+// 加载状态
+.loading-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #F7F9FA;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99;
+}
+
+.loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #E8ECF1;
+    border-top-color: #00D4AA;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-text {
+    font-size: 14px;
+    color: #A0AEC0;
 }
 
 .nav-bar {

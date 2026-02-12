@@ -149,5 +149,6 @@
         "navigationBarBackgroundColor": "#FFFFFF",
         "backgroundColor": "#F7F9FA"
     },
-    "uniIdRouter": {}
+    "uniIdRouter": {},
+    "lazyCodeLoading": "requiredComponents"
 }

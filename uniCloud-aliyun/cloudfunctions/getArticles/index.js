@@ -4,7 +4,16 @@ const db = uniCloud.database();
 
 module.exports = {
     async main(event) {
-        const { page = 1, pageSize = 10, category = '', userRole = 'student' } = event;
+        const {
+            page = 1,
+            pageSize = 10,
+            category = '',
+            userRole = 'student',
+            sourceId = '',
+            tag = '',
+            startDate = 0,
+            endDate = 0
+        } = event;
 
         try {
             // 构建查询条件
@@ -15,6 +24,28 @@ module.exports = {
             // 分类筛选
             if (category) {
                 whereCondition.category = category;
+            }
+
+            // 来源筛选
+            if (sourceId) {
+                whereCondition.sourceId = sourceId;
+            }
+
+            // 标签筛选
+            if (tag) {
+                whereCondition['tags.source'] = tag;
+            }
+
+            // 时间范围筛选
+            if (startDate > 0 && endDate > 0) {
+                whereCondition.publishTime = db.command.and(
+                    db.command.gte(startDate),
+                    db.command.lte(endDate)
+                );
+            } else if (startDate > 0) {
+                whereCondition.publishTime = db.command.gte(startDate);
+            } else if (endDate > 0) {
+                whereCondition.publishTime = db.command.lte(endDate);
             }
 
             // 按角色过滤（如果有role标签且不是"通用"）

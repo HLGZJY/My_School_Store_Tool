@@ -8,6 +8,13 @@
             </view>
         </view>
 
+        <!-- 筛选面板 -->
+        <FilterPanel
+            :sources="sources"
+            :showTag="false"
+            @filterChange="onFilterChange"
+        />
+
         <scroll-view class="content" scroll-y @scrolltolower="loadMore">
             <view v-if="history.length > 0">
                 <view
@@ -37,16 +44,34 @@
 </template>
 
 <script>
+import FilterPanel from '@/components/FilterPanel.vue'
+
 export default {
+    components: {
+        FilterPanel
+    },
     data() {
         return {
             history: [],
             page: 1,
             hasMore: true,
-            loading: false
+            loading: false,
+
+            // 筛选条件
+            filterSourceId: '',
+
+            // 数据源配置
+            sources: [
+                { id: 'jwc', name: '教务处' },
+                { id: 'library', name: '图书馆' },
+                { id: 'xsc', name: '学生处' },
+                { id: 'cs', name: '计算机学院' },
+                { id: 'jyzd', name: '就业指导中心' }
+            ]
         }
     },
     onLoad() {
+        this.loadSources()
         this.loadHistory()
     },
     onPullDownRefresh() {
@@ -55,9 +80,39 @@ export default {
         this.loadHistory(true)
     },
     methods: {
+        // 加载数据源
+        async loadSources() {
+            try {
+                const res = await uniCloud.callFunction({
+                    name: 'getSubscribeSources'
+                });
+                if (res.result.code === 0 && res.result.data) {
+                    this.sources = res.result.data.map(s => ({
+                        id: s.id,
+                        name: s.name
+                    }));
+                }
+            } catch (e) {
+                console.error('加载数据源失败:', e);
+            }
+        },
+        // 筛选变化
+        onFilterChange(filters) {
+            this.filterSourceId = filters.sourceId;
+            this.page = 1;
+            this.hasMore = true;
+            this.history = [];
+            this.loadHistory(true);
+        },
         async loadHistory(refresh = false) {
-            if (this.loading) return
-            this.loading = true
+            // 防止重复请求
+            if (refresh) {
+                uni.stopPullDownRefresh()
+                setTimeout(() => uni.stopPullDownRefresh(), 10)
+            }
+            if (this.loading && !refresh) return
+
+            this.loading = !refresh
 
             try {
                 const openid = uni.getStorageSync('userId')
@@ -66,6 +121,7 @@ export default {
                     name: 'getReadingHistory',
                     data: {
                         userId: openid,
+                        sourceId: this.filterSourceId,
                         page: this.page,
                         pageSize: 20
                     }
@@ -90,7 +146,7 @@ export default {
                 })
             } finally {
                 this.loading = false
-                uni.stopPullDownRefresh()
+                setTimeout(() => uni.stopPullDownRefresh(), 100)
             }
         },
 

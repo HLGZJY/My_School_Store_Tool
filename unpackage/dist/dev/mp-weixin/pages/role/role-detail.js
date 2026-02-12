@@ -5,26 +5,75 @@ const _sfc_main = {
     return {
       role: "",
       form: {
-        major: "",
+        college: "",
         grade: "",
         interests: [],
-        department: "",
-        title: "",
-        researchField: "",
-        duties: ""
+        department: ""
       },
       grades: ["2021级", "2022级", "2023级", "2024级"],
-      titles: ["助教", "讲师", "副教授", "教授"],
+      colleges: [
+        "信息科学技术学院",
+        "机械工程学院",
+        "经济管理学院",
+        "文法学院",
+        "外国语学院",
+        "艺术学院",
+        "理学院",
+        "建筑工程学院",
+        "材料科学与工程学院",
+        "电气工程学院",
+        "能源与动力工程学院",
+        "化学与环境工程学院",
+        "生命科学学院",
+        "马克思主义学院",
+        "体育学院",
+        "继续教育学院"
+      ],
+      departments: [
+        "信息科学技术学院",
+        "机械工程学院",
+        "经济管理学院",
+        "文法学院",
+        "外国语学院",
+        "艺术学院",
+        "理学院",
+        "建筑工程学院",
+        "材料科学与工程学院",
+        "电气工程学院",
+        "能源与动力工程学院",
+        "化学与环境工程学院",
+        "生命科学学院",
+        "马克思主义学院",
+        "体育学院",
+        "继续教育学院"
+      ],
+      adminDepts: [
+        "党委办公室",
+        "校长办公室",
+        "人事处",
+        "教务处",
+        "学生工作处",
+        "科研处",
+        "财务处",
+        "后勤管理处",
+        "保卫处",
+        "组织部",
+        "宣传部",
+        "统战部",
+        "纪委办公室",
+        "工会",
+        "团委"
+      ],
       interestTags: ["编程", "人工智能", "考研", "就业", "竞赛", "科研", "实习", "创新创业"]
     };
   },
   computed: {
     isFormValid() {
       if (this.role === "student") {
-        return this.form.major && this.form.grade && this.form.interests.length > 0;
+        return this.form.college && this.form.grade && this.form.interests.length > 0;
       }
       if (this.role === "teacher") {
-        return this.form.department && this.form.title;
+        return this.form.department;
       }
       if (this.role === "admin") {
         return this.form.department;
@@ -36,11 +85,17 @@ const _sfc_main = {
     this.role = options.role || "";
   },
   methods: {
+    onCollegeChange(e) {
+      this.form.college = this.colleges[e.detail.value];
+    },
     onGradeChange(e) {
       this.form.grade = this.grades[e.detail.value];
     },
-    onTitleChange(e) {
-      this.form.title = this.titles[e.detail.value];
+    onDepartmentChange(e) {
+      this.form.department = this.departments[e.detail.value];
+    },
+    onAdminDeptChange(e) {
+      this.form.department = this.adminDepts[e.detail.value];
     },
     toggleInterest(tag) {
       const index = this.form.interests.indexOf(tag);
@@ -57,20 +112,17 @@ const _sfc_main = {
         const roleDetail = {};
         if (this.role === "student") {
           roleDetail.student = {
-            major: this.form.major,
+            college: this.form.college,
             grade: this.form.grade,
             interests: this.form.interests
           };
         } else if (this.role === "teacher") {
           roleDetail.teacher = {
-            department: this.form.department,
-            title: this.form.title,
-            researchField: this.form.researchField
+            department: this.form.department
           };
         } else if (this.role === "admin") {
           roleDetail.admin = {
-            department: this.form.department,
-            duties: this.form.duties
+            department: this.form.department
           };
         }
         const res = await common_vendor.Vs.callFunction({
@@ -115,17 +167,23 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
     a: $data.role === "student"
   }, $data.role === "student" ? {
-    b: $data.form.major,
-    c: common_vendor.o(($event) => $data.form.major = $event.detail.value),
-    d: common_vendor.t($data.form.grade || "请选择年级"),
-    e: common_vendor.p({
+    b: common_vendor.t($data.form.college || "请选择所在学院"),
+    c: common_vendor.p({
       type: "arrowdown",
       size: "16",
       color: "#A0AEC0"
     }),
-    f: $data.grades,
-    g: common_vendor.o((...args) => $options.onGradeChange && $options.onGradeChange(...args)),
-    h: common_vendor.f($data.interestTags, (tag, k0, i0) => {
+    d: $data.colleges,
+    e: common_vendor.o((...args) => $options.onCollegeChange && $options.onCollegeChange(...args)),
+    f: common_vendor.t($data.form.grade || "请选择年级"),
+    g: common_vendor.p({
+      type: "arrowdown",
+      size: "16",
+      color: "#A0AEC0"
+    }),
+    h: $data.grades,
+    i: common_vendor.o((...args) => $options.onGradeChange && $options.onGradeChange(...args)),
+    j: common_vendor.f($data.interestTags, (tag, k0, i0) => {
       return {
         a: common_vendor.t(tag),
         b: tag,
@@ -134,30 +192,30 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : {}, {
-    i: $data.role === "teacher"
+    k: $data.role === "teacher"
   }, $data.role === "teacher" ? {
-    j: $data.form.department,
-    k: common_vendor.o(($event) => $data.form.department = $event.detail.value),
-    l: common_vendor.t($data.form.title || "请选择职称"),
+    l: common_vendor.t($data.form.department || "请选择院系"),
     m: common_vendor.p({
       type: "arrowdown",
       size: "16",
       color: "#A0AEC0"
     }),
-    n: $data.titles,
-    o: common_vendor.o((...args) => $options.onTitleChange && $options.onTitleChange(...args)),
-    p: $data.form.researchField,
-    q: common_vendor.o(($event) => $data.form.researchField = $event.detail.value)
+    n: $data.departments,
+    o: common_vendor.o((...args) => $options.onDepartmentChange && $options.onDepartmentChange(...args))
   } : {}, {
-    r: $data.role === "admin"
+    p: $data.role === "admin"
   }, $data.role === "admin" ? {
-    s: $data.form.department,
-    t: common_vendor.o(($event) => $data.form.department = $event.detail.value),
-    v: $data.form.duties,
-    w: common_vendor.o(($event) => $data.form.duties = $event.detail.value)
+    q: common_vendor.t($data.form.department || "请选择部门"),
+    r: common_vendor.p({
+      type: "arrowdown",
+      size: "16",
+      color: "#A0AEC0"
+    }),
+    s: $data.adminDepts,
+    t: common_vendor.o((...args) => $options.onAdminDeptChange && $options.onAdminDeptChange(...args))
   } : {}, {
-    x: !$options.isFormValid,
-    y: common_vendor.o((...args) => $options.confirm && $options.confirm(...args))
+    v: !$options.isFormValid,
+    w: common_vendor.o((...args) => $options.confirm && $options.confirm(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-0a3495a6"]]);

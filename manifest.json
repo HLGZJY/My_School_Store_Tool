@@ -51,17 +51,10 @@
     /* 小程序特有相关 */
     "mp-weixin" : {
         "appid" : "wx21bdaa579562ec11",
-        "appsecret" : "1efd7d7a175d83ec611cac4758db9f51",
         "setting" : {
             "urlCheck" : false
         },
-        "usingComponents" : true,
-        "oauth" : {
-            "weixin" : {
-                "appid" : "wx21bdaa579562ec11",
-                "appsecret" : "1efd7d7a175d83ec611cac4758db9f51"
-            }
-        }
+        "usingComponents" : true
     },
     "mp-alipay" : {
         "usingComponents" : true

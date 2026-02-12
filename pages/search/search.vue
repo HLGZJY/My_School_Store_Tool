@@ -8,6 +8,15 @@
             @back="goBack"
         />
 
+        <!-- 筛选面板 -->
+        <FilterPanel
+            v-if="hasSearched"
+            :sources="sources"
+            :tags="tagOptions"
+            @filterChange="onFilterChange"
+            ref="filterRef"
+        />
+
         <!-- 搜索结果 -->
         <SearchResult
             v-if="hasSearched"
@@ -34,13 +43,16 @@
 import SearchHeader from './components/SearchHeader.vue'
 import SearchSuggest from './components/SearchSuggest.vue'
 import SearchResult from './components/SearchResult.vue'
+import FilterPanel from '@/components/FilterPanel.vue'
+import { loadWithCache } from '@/utils/cache.js'
 
 export default {
     name: 'Search',
     components: {
         SearchHeader,
         SearchSuggest,
-        SearchResult
+        SearchResult,
+        FilterPanel
     },
     data() {
         return {
@@ -51,7 +63,22 @@ export default {
             hasMore: true,
             loading: false,
             searchHistory: [],
-            hotKeywords: []
+            hotKeywords: [],
+
+            // 筛选条件
+            filterSourceId: '',
+            filterTag: '',
+            filterTimeRange: '',
+
+            // 数据源配置
+            sources: [
+                { id: 'jwc', name: '教务处' },
+                { id: 'library', name: '图书馆' },
+                { id: 'xsc', name: '学生处' },
+                { id: 'cs', name: '计算机学院' },
+                { id: 'jyzd', name: '就业指导中心' }
+            ],
+            tagOptions: ['通知', '讲座', '活动', '竞赛', '讲座预告', '考试通知']
         }
     },
     onLoad(options) {
@@ -61,8 +88,35 @@ export default {
         }
         this.loadHotKeywords()
         this.loadSearchHistory()
+        this.loadSources()
     },
     methods: {
+        // 加载数据源
+        async loadSources() {
+            try {
+                const res = await uniCloud.callFunction({
+                    name: 'getSubscribeSources'
+                });
+                if (res.result.code === 0 && res.result.data) {
+                    this.sources = res.result.data.map(s => ({
+                        id: s.id,
+                        name: s.name
+                    }));
+                }
+            } catch (e) {
+                console.error('加载数据源失败:', e);
+            }
+        },
+        // 筛选变化
+        onFilterChange(filters) {
+            this.filterSourceId = filters.sourceId;
+            this.filterTag = filters.tag;
+            this.filterTimeRange = filters.timeRange;
+            this.page = 1;
+            this.hasMore = true;
+            this.articles = [];
+            this.loadArticles();
+        },
         // 执行搜索
         async doSearch() {
             if (!this.keyword.trim()) {
@@ -86,13 +140,33 @@ export default {
             if (this.loading) return
             this.loading = true
 
+            // 构建时间范围
+            let startDate = 0, endDate = 0;
+            if (this.filterTimeRange) {
+                const now = Date.now();
+                const ranges = {
+                    '1d': 1 * 24 * 60 * 60 * 1000,
+                    '7d': 7 * 24 * 60 * 60 * 1000,
+                    '30d': 30 * 24 * 60 * 60 * 1000
+                };
+                const days = ranges[this.filterTimeRange] || 0;
+                if (days > 0) {
+                    endDate = now;
+                    startDate = now - days;
+                }
+            }
+
             try {
                 const res = await uniCloud.callFunction({
                     name: 'searchArticles',
                     data: {
                         keyword: this.keyword,
                         page: this.page,
-                        pageSize: 20
+                        pageSize: 20,
+                        sourceId: this.filterSourceId,
+                        tag: this.filterTag,
+                        startDate,
+                        endDate
                     }
                 })
 
@@ -127,18 +201,17 @@ export default {
 
         // 加载热门关键词
         async loadHotKeywords() {
-            try {
+            const data = await loadWithCache('search_hot', 'HOT_KEYWORDS', async () => {
                 const res = await uniCloud.callFunction({
                     name: 'getHotKeywords',
                     data: { limit: 10 }
                 })
-
                 if (res.result.code === 0) {
-                    this.hotKeywords = res.result.data || []
+                    return res.result.data || []
                 }
-            } catch (error) {
-                console.error('加载热门搜索失败:', error)
-            }
+                return []
+            })
+            this.hotKeywords = data
         },
 
         // 加载搜索历史

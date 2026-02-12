@@ -39,6 +39,8 @@
 </template>
 
 <script>
+import { loadWithCache, clearCache } from '@/utils/cache.js'
+
 export default {
     data() {
         return {
@@ -62,11 +64,28 @@ export default {
         this.loadMessages()
     },
     methods: {
-        async loadMessages() {
+        async loadMessages(forceRefresh = false) {
             if (this.loading) return
             this.loading = true
 
             try {
+                // 只有第一页使用缓存
+                if (this.page === 1 && !forceRefresh) {
+                    const cached = loadWithCache('message_list', 'MESSAGE', async () => {
+                        return null // 标记需要网络请求
+                    })
+                    if (cached !== null) {
+                        // 有有效缓存，先显示缓存
+                        const cacheData = await loadWithCache('message_list', 'MESSAGE', async () => null)
+                        if (cacheData && cacheData.messages) {
+                            this.messages = cacheData.messages
+                            this.hasMore = cacheData.hasMore
+                            this.loading = false
+                            return
+                        }
+                    }
+                }
+
                 const openid = uni.getStorageSync('userId')
 
                 const res = await uniCloud.callFunction({
@@ -83,6 +102,10 @@ export default {
                     const { messages, hasMore } = res.result.data
 
                     if (this.page === 1) {
+                        // 第一页缓存结果
+                        clearCache('message_list')
+                        const { clearCache: _, ...cacheData } = { messages, hasMore }
+                        uni.setStorageSync('cache_message_list', { time: Date.now(), data: cacheData })
                         this.messages = messages
                     } else {
                         this.messages = [...this.messages, ...messages]
