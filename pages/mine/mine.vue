@@ -217,11 +217,17 @@ export default {
                                 if (res2.confirm) {
                                     uni.showLoading({ title: '注销中...' });
                                     try {
-                                        const openid = uni.getStorageSync('userId');
-                                        const userId = this.$store.state.user.userId;
+                                        // 从本地存储获取用户标识
+                                        // userId 是 users 表的 _id
+                                        const userId = uni.getStorageSync('userId');
+                                        if (!userId) {
+                                            uni.hideLoading();
+                                            uni.showToast({ title: '用户未登录', icon: 'none' });
+                                            return;
+                                        }
                                         const res3 = await uniCloud.callFunction({
                                             name: 'deleteUserAccount',
-                                            data: { openid, userId }
+                                            data: { userId }
                                         });
                                         if (res3.result.code === 0) {
                                             uni.showToast({ title: '账号已注销', icon: 'success' });
