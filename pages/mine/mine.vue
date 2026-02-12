@@ -169,8 +169,8 @@ export default {
         },
         clearCache() {
             uni.showModal({
-                title: '提示',
-                content: '确定清除缓存吗？',
+                title: '清除缓存',
+                content: '清除该用户名下的所有记录，包括收藏、阅读历史、搜索历史、订阅信息等。请谨慎选择！',
                 success: (res) => {
                     if (res.confirm) {
                         try {
