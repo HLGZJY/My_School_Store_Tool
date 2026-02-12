@@ -77,14 +77,6 @@
             }
         },
         {
-            "path": "pages/settings/settings",
-            "style": {
-                "navigationBarTitleText": "设置",
-                "navigationBarBackgroundColor": "#FFFFFF",
-                "navigationBarTextStyle": "black"
-            }
-        },
-        {
             "path": "pages/subscribe/subscribe",
             "style": {
                 "navigationBarTitleText": "订阅管理",

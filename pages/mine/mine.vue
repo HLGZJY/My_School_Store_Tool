@@ -33,39 +33,28 @@
                     <uni-icons type="arrowright" size="16" color="#A0AEC0"></uni-icons>
                 </view>
             </view>
-        </view>
 
-        <!-- 通用设置 -->
-        <view class="section">
-            <text class="section-title">通用设置</text>
-            <view class="menu-item">
-                <text class="menu-label">字体大小</text>
-                <picker mode="selector" :range="fontSizes" :value="fontSizeIndex" @change="onFontSizeChange">
-                    <view class="picker-value">
-                        {{ currentFontSize }}
-                        <uni-icons type="arrowright" size="16" color="#A0AEC0"></uni-icons>
-                    </view>
-                </picker>
-            </view>
-            <view class="menu-item">
-                <text class="menu-label">深色模式</text>
-                <switch :checked="darkMode" @change="onDarkModeChange" color="#00D4AA" />
-            </view>
-        </view>
-
-        <!-- 其他 -->
-        <view class="section">
-            <text class="section-title">其他</text>
             <view class="menu-item" @click="goToAbout">
-                <text class="menu-label">关于小程序</text>
+                <view class="left">
+                    <uni-icons type="info" size="20" color="#00D4AA"></uni-icons>
+                    <text class="text">关于小程序</text>
+                </view>
                 <uni-icons type="arrowright" size="16" color="#A0AEC0"></uni-icons>
             </view>
+
             <view class="menu-item" @click="clearCache">
-                <text class="menu-label">清除缓存</text>
+                <view class="left">
+                    <uni-icons type="trash" size="20" color="#00D4AA"></uni-icons>
+                    <text class="text">清除缓存</text>
+                </view>
                 <text class="cache-size">{{ cacheSize }}</text>
             </view>
+
             <view class="menu-item" @click="contactUs">
-                <text class="menu-label">联系我们</text>
+                <view class="left">
+                    <uni-icons type="chat" size="20" color="#00D4AA"></uni-icons>
+                    <text class="text">联系我们</text>
+                </view>
                 <uni-icons type="arrowright" size="16" color="#A0AEC0"></uni-icons>
             </view>
         </view>
@@ -97,19 +86,11 @@ export default {
     data: () => ({
         userInfo: {},
         unreadCount: 0,
-        fontSizes: ['小', '中', '大'],
-        currentFontSize: '中',
-        darkMode: false,
         cacheSize: '0MB'
     }),
-    computed: {
-        fontSizeIndex() {
-            return this.fontSizes.indexOf(this.currentFontSize);
-        }
-    },
     onLoad() {
-        this.loadSettings();
         this.calculateCacheSize();
+        this.applySystemSettings();
     },
     onShow() {
         this.loadData();
@@ -148,17 +129,21 @@ export default {
                 console.error('加载未读消息数失败:', e);
             }
         },
-        loadSettings() {
-            const settings = uni.getStorageSync('settings') || {};
-            this.currentFontSize = settings.fontSize || '中';
-            this.darkMode = settings.darkMode || false;
-        },
-        saveSettings() {
-            const settings = {
-                fontSize: this.currentFontSize,
-                darkMode: this.darkMode
-            };
-            uni.setStorageSync('settings', settings);
+        applySystemSettings() {
+            // 获取系统信息，跟随系统设置
+            const systemInfo = uni.getSystemInfoSync();
+            const { fontSizeRatio } = systemInfo;
+
+            // 微信小程序支持监听主题变化
+            if (uni.onThemeChange) {
+                uni.onThemeChange((res) => {
+                    if (res.theme === 'dark') {
+                        uni.setStorageSync('darkMode', true);
+                    } else {
+                        uni.removeStorageSync('darkMode');
+                    }
+                });
+            }
         },
         calculateCacheSize() {
             try {
@@ -169,20 +154,6 @@ export default {
             } catch (error) {
                 console.error('计算缓存大小失败:', error);
             }
-        },
-        onFontSizeChange(e) {
-            const index = e.detail.value;
-            this.currentFontSize = this.fontSizes[index];
-            this.saveSettings();
-            uni.showToast({ title: '已设置字体大小', icon: 'success' });
-        },
-        onDarkModeChange(e) {
-            this.darkMode = e.detail.value;
-            this.saveSettings();
-            uni.showToast({
-                title: this.darkMode ? '深色模式已开启' : '深色模式已关闭',
-                icon: 'success'
-            });
         },
         goToPage(name) {
             const url = PAGE_MAP[name];
@@ -284,31 +255,6 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.section {
-    margin-top: 8px;
-    padding: 0 20px;
-    background-color: #FFFFFF;
-}
-
-.section-title {
-    display: block;
-    font-size: 14px;
-    color: #A0AEC0;
-    padding: 20px 0 12px;
-}
-
-.menu-label {
-    font-size: 14px;
-    color: #4A5568;
-}
-
-.picker-value {
-    display: flex;
-    align-items: center;
-    font-size: 14px;
-    color: #A0AEC0;
 }
 
 .cache-size {

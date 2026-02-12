@@ -140,9 +140,7 @@ const _sfc_main = {
             icon: "success"
           });
           setTimeout(() => {
-            common_vendor.index.switchTab({
-              url: "/pages/index/index"
-            });
+            common_vendor.index.navigateBack();
           }, 1500);
         } else {
           throw new Error(res.result.message);

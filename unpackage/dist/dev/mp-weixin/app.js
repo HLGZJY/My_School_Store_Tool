@@ -12,7 +12,6 @@ if (!Math) {
   "./pages/collection/collection.js";
   "./pages/history/history.js";
   "./pages/message/message.js";
-  "./pages/settings/settings.js";
   "./pages/subscribe/subscribe.js";
   "./pages/about/about.js";
   "./pages/login/login.js";

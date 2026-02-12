@@ -121,13 +121,6 @@ const _sfc_main = {
         url: `/pages/search/search?keyword=${tagName}`
       });
     },
-    // 查看更多排行
-    viewMoreRanking() {
-      common_vendor.index.showToast({
-        title: "功能开发中",
-        icon: "none"
-      });
-    },
     // 查看更多订阅
     viewMoreSubscribe() {
       common_vendor.index.navigateTo({
@@ -182,25 +175,24 @@ if (!Array) {
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
-    a: common_vendor.o($options.viewMoreRanking),
-    b: common_vendor.o($options.goToDetail),
-    c: common_vendor.p({
+    a: common_vendor.o($options.goToDetail),
+    b: common_vendor.p({
       ranking: $data.ranking
     }),
-    d: common_vendor.o($options.searchTag),
-    e: common_vendor.p({
+    c: common_vendor.o($options.searchTag),
+    d: common_vendor.p({
       tags: $data.tags
     }),
-    f: common_vendor.sr("timelineRef", "7f6951af-2"),
-    g: common_vendor.o($options.loadTimelineArticles),
-    h: common_vendor.o($options.goToDetail),
-    i: common_vendor.p({
+    e: common_vendor.sr("timelineRef", "7f6951af-2"),
+    f: common_vendor.o($options.loadTimelineArticles),
+    g: common_vendor.o($options.goToDetail),
+    h: common_vendor.p({
       timeline: $data.timeline
     }),
-    j: common_vendor.o($options.handleSubscribe),
-    k: common_vendor.o($options.handleUnsubscribe),
-    l: common_vendor.o($options.viewMoreSubscribe),
-    m: common_vendor.p({
+    i: common_vendor.o($options.handleSubscribe),
+    j: common_vendor.o($options.handleUnsubscribe),
+    k: common_vendor.o($options.viewMoreSubscribe),
+    l: common_vendor.p({
       subscribed: $data.subscribed,
       recommended: $data.recommended
     })

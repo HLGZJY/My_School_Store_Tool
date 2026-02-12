@@ -4,7 +4,6 @@
   "navigationBarTextStyle": "black",
   "usingComponents": {
     "user-card": "./components/UserCard",
-    "stats-card": "./components/StatsCard",
-    "menu-list": "./components/MenuList"
+    "stats-card": "./components/StatsCard"
   }
 }

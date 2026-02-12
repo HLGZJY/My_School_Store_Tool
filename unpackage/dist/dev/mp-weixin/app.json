@@ -9,7 +9,6 @@
     "pages/collection/collection",
     "pages/history/history",
     "pages/message/message",
-    "pages/settings/settings",
     "pages/subscribe/subscribe",
     "pages/about/about",
     "pages/login/login",
@@ -47,6 +46,5 @@
       }
     ]
   },
-  "usingComponents": {},
-  "lazyCodeLoading": "requiredComponents"
+  "usingComponents": {}
 }

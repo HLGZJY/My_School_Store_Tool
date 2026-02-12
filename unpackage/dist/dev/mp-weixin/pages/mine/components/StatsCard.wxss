@@ -15,16 +15,10 @@
   flex: 1;
   text-align: center;
 }
-.stats-card .stat-item .value.data-v-32d9cf9b {
-  display: block;
-  font-size: 24px;
-  font-weight: 600;
-  color: #0A2540;
-  margin-bottom: 4px;
-}
 .stats-card .stat-item .label.data-v-32d9cf9b {
-  font-size: 13px;
-  color: #A0AEC0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #4A5568;
 }
 .stats-card .divider.data-v-32d9cf9b {
   width: 1px;

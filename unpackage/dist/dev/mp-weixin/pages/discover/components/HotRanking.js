@@ -8,10 +8,23 @@ const _sfc_main = {
       default: () => []
     }
   },
-  emits: ["more", "detail"],
+  emits: ["detail"],
+  data() {
+    return {
+      expanded: false
+    };
+  },
+  computed: {
+    displayRanking() {
+      if (this.expanded) {
+        return this.ranking;
+      }
+      return this.ranking.slice(0, 5);
+    }
+  },
   methods: {
-    viewMore() {
-      this.$emit("more");
+    toggleExpand() {
+      this.expanded = !this.expanded;
     },
     goToDetail(id) {
       this.$emit("detail", id);
@@ -20,8 +33,9 @@ const _sfc_main = {
 };
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
-    a: common_vendor.o((...args) => $options.viewMore && $options.viewMore(...args)),
-    b: common_vendor.f($props.ranking, (item, index, i0) => {
+    a: common_vendor.t($data.expanded ? "收起" : "查看更多"),
+    b: common_vendor.o((...args) => $options.toggleExpand && $options.toggleExpand(...args)),
+    c: common_vendor.f($options.displayRanking, (item, index, i0) => {
       return {
         a: common_vendor.t(index + 1),
         b: common_vendor.n("rank-" + (index + 1)),

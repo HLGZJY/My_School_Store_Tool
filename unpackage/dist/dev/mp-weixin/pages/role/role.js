@@ -3,7 +3,9 @@ const common_vendor = require("../../common/vendor.js");
 const _sfc_main = {
   data() {
     return {
+      currentRole: "",
       selectedRole: "",
+      isSwitching: false,
       roles: [
         {
           value: "student",
@@ -26,13 +28,34 @@ const _sfc_main = {
       ]
     };
   },
+  computed: {
+    currentRoleName() {
+      const map = { student: "在校学生", teacher: "教师", admin: "行政人员" };
+      return map[this.currentRole] || "未设置";
+    }
+  },
+  onLoad(options) {
+    this.currentRole = options.currentRole || "";
+    this.isSwitching = !!options.switch;
+  },
   methods: {
     selectRole(value) {
       this.selectedRole = value;
     },
+    goBack() {
+      common_vendor.index.navigateBack();
+    },
     async confirmRole() {
       if (!this.selectedRole)
         return;
+      if (this.selectedRole === this.currentRole && this.isSwitching) {
+        common_vendor.index.showToast({
+          title: "您已是该身份",
+          icon: "none"
+        });
+        common_vendor.index.navigateBack();
+        return;
+      }
       common_vendor.index.showLoading({ title: "设置中..." });
       try {
         const userId = this.$store.state.user.userId;
@@ -56,8 +79,10 @@ if (!Array) {
   _component_uni_icons();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
-  return {
-    a: common_vendor.f($data.roles, (role, k0, i0) => {
+  return common_vendor.e({
+    a: common_vendor.t($data.isSwitching ? "切换身份" : "请选择您的身份"),
+    b: common_vendor.t($data.isSwitching ? "您当前是 " + $options.currentRoleName : "我们将根据您的身份推送相关内容"),
+    c: common_vendor.f($data.roles, (role, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(role.icon),
         b: common_vendor.t(role.name),
@@ -76,9 +101,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         i: common_vendor.o(($event) => $options.selectRole(role.value), role.value)
       });
     }),
-    b: !$data.selectedRole,
-    c: common_vendor.o((...args) => $options.confirmRole && $options.confirmRole(...args))
-  };
+    d: common_vendor.t($data.isSwitching ? "确认切换" : "确认选择"),
+    e: !$data.selectedRole,
+    f: common_vendor.o((...args) => $options.confirmRole && $options.confirmRole(...args)),
+    g: $data.isSwitching
+  }, $data.isSwitching ? {
+    h: common_vendor.o((...args) => $options.goBack && $options.goBack(...args))
+  } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-601540eb"]]);
 wx.createPage(MiniProgramPage);
