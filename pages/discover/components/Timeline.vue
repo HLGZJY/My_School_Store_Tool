@@ -8,29 +8,33 @@
             <view
                 v-for="item in timeline"
                 :key="item.timestamp"
-                class="timeline-item"
-                @click="toggleItem(item)"
+                class="timeline-item-wrap"
             >
-                <view class="timeline-date">
-                    <text class="date">{{ item.date }}</text>
-                    <text class="count">{{ item.count }}篇</text>
+                <view class="timeline-item" @click="toggleItem(item)">
+                    <view class="timeline-date">
+                        <text class="date">{{ item.date }}</text>
+                        <text class="count">{{ item.count }}篇</text>
+                    </view>
+                    <view class="timeline-arrow">
+                        <uni-icons :type="item.expanded ? 'up' : 'down'" size="16" color="#A0AEC0"></uni-icons>
+                    </view>
                 </view>
-                <view class="timeline-arrow">
-                    <uni-icons :type="item.expanded ? 'up' : 'down'" size="16" color="#A0AEC0"></uni-icons>
-                </view>
-            </view>
-        </view>
 
-        <!-- 展开的内容 -->
-        <view v-if="expandedItem" class="expanded-content">
-            <view
-                v-for="article in expandedItem.articles"
-                :key="article._id"
-                class="timeline-article"
-                @click="goToDetail(article._id)"
-            >
-                <text class="article-title">{{ article.title }}</text>
-                <text class="article-time">{{ formatTime(article.publishTime) }}</text>
+                <!-- 展开的内容 - 在时间节点下方显示 -->
+                <view v-if="item.expanded" class="expanded-content">
+                    <view
+                        v-for="article in item.articles"
+                        :key="article._id"
+                        class="timeline-article"
+                        @click="goToDetail(article._id)"
+                    >
+                        <text class="article-title">{{ article.title }}</text>
+                        <text class="article-time">{{ formatTime(article.publishTime) }}</text>
+                    </view>
+                    <view v-if="!item.articles || item.articles.length === 0" class="no-articles">
+                        <text class="no-articles-text">暂无文章</text>
+                    </view>
+                </view>
             </view>
         </view>
     </view>
@@ -46,26 +50,11 @@ export default {
         }
     },
     emits: ['toggle', 'detail'],
-    data() {
-        return {
-            expandedItem: null
-        }
-    },
     methods: {
         async toggleItem(item) {
-            // 关闭已展开的项目
-            if (this.expandedItem && this.expandedItem.timestamp === item.timestamp) {
-                item.expanded = !item.expanded
-                if (!item.expanded) {
-                    this.expandedItem = null
-                }
-            } else {
-                if (this.expandedItem) {
-                    this.expandedItem.expanded = false
-                }
-                item.expanded = true
-                this.expandedItem = item
-                // 通知父组件加载文章
+            item.expanded = !item.expanded
+            if (item.expanded) {
+                // 展开时通知父组件加载文章
                 this.$emit('toggle', item)
             }
         },
@@ -75,20 +64,6 @@ export default {
         },
         goToDetail(id) {
             this.$emit('detail', id)
-        }
-    },
-    watch: {
-        timeline: {
-            handler(newVal) {
-                // 同步展开状态
-                if (this.expandedItem) {
-                    const found = newVal.find(t => t.timestamp === this.expandedItem.timestamp)
-                    if (found) {
-                        this.expandedItem = found
-                    }
-                }
-            },
-            deep: true
         }
     }
 }
@@ -114,16 +89,19 @@ export default {
     color: #0A2540;
 }
 
-.timeline-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 0;
+.timeline-item-wrap {
     border-bottom: 1px solid #E8ECF1;
 
     &:last-child {
         border-bottom: none;
     }
+}
+
+.timeline-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
 
     &:active {
         background-color: #F7F9FA;
@@ -145,7 +123,7 @@ export default {
 }
 
 .expanded-content {
-    padding: 0 20px;
+    padding: 0 12px 12px 12px;
     background-color: #F7F9FA;
 }
 
@@ -171,6 +149,16 @@ export default {
     .article-time {
         display: block;
         font-size: 12px;
+        color: #A0AEC0;
+    }
+}
+
+.no-articles {
+    padding: 20px 0;
+    text-align: center;
+
+    .no-articles-text {
+        font-size: 14px;
         color: #A0AEC0;
     }
 }
