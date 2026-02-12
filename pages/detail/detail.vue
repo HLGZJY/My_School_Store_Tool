@@ -131,8 +131,8 @@ export default {
 
         async loadCollectStatus() {
             try {
-                // 方案A：获取 openid（从 store 或本地存储）
-                const openid = this.$store.state.user.userId || uni.getStorageSync('userId')
+                // 从本地存储获取 openid
+                const openid = uni.getStorageSync('openid')
                 if (!openid) {
                     console.log('loadCollectStatus: 未登录，不检查收藏状态')
                     return
@@ -141,7 +141,7 @@ export default {
                 const res = await uniCloud.callFunction({
                     name: 'getCollections',
                     data: {
-                        userId: openid,  // 方案A：传递 openid
+                        userId: openid,
                         articleId: this.articleId,
                         pageSize: 1
                     }
@@ -157,8 +157,8 @@ export default {
 
         async recordRead() {
             try {
-                // 方案A：直接传递 openid（后续应优化为获取用户文档ID）
-                const openid = this.$store.state.user.userId
+                // 从本地存储获取 openid
+                const openid = uni.getStorageSync('openid')
 
                 // 异步记录阅读，不阻塞页面
                 uniCloud.callFunction({
@@ -175,8 +175,8 @@ export default {
         },
 
         async toggleCollect() {
-            // 方案A：获取 openid（从 store 或本地存储）
-            const openid = this.$store.state.user.userId || uni.getStorageSync('userId')
+            // 获取 openid
+            const openid = uni.getStorageSync('openid')
             if (!openid) {
                 uni.showToast({
                     title: '请先登录',
@@ -189,7 +189,7 @@ export default {
                 const res = await uniCloud.callFunction({
                     name: 'collectArticle',
                     data: {
-                        userId: openid,  // 方案A：传递 openid
+                        userId: openid,
                         articleId: this.articleId,
                         action: this.isCollected ? 'uncollect' : 'collect'
                     }

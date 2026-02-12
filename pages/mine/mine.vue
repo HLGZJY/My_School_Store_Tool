@@ -106,7 +106,7 @@ export default {
     },
     methods: {
         async loadData() {
-            const openid = this.$store.state.user.userId || uni.getStorageSync('userId');
+            const openid = uni.getStorageSync('openid');
             if (!openid) return;
 
             try {
@@ -122,7 +122,7 @@ export default {
             }
         },
         async loadUnread() {
-            const openid = this.$store.state.user.userId || uni.getStorageSync('userId');
+            const openid = uni.getStorageSync('openid');
             if (!openid) return;
 
             try {
@@ -217,19 +217,16 @@ export default {
                                 if (res2.confirm) {
                                     uni.showLoading({ title: '注销中...' });
                                     try {
-                                        // 从本地存储获取用户标识
-                                        // userId 是 users 表的 _id
-                                        // openid 是微信标识，用于删除其他表
-                                        const userId = uni.getStorageSync('userId');
+                                        // 从本地存储获取 openid
                                         const openid = uni.getStorageSync('openid');
-                                        if (!userId || !openid) {
+                                        if (!openid) {
                                             uni.hideLoading();
                                             uni.showToast({ title: '用户未登录', icon: 'none' });
                                             return;
                                         }
                                         const res3 = await uniCloud.callFunction({
                                             name: 'deleteUserAccount',
-                                            data: { userId, openid }
+                                            data: { userId: openid }
                                         });
                                         if (res3.result.code === 0) {
                                             uni.showToast({ title: '账号已注销', icon: 'success' });

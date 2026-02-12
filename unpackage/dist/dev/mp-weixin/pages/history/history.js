@@ -66,7 +66,7 @@ const _sfc_main = {
         return;
       this.loading = !refresh;
       try {
-        const openid = common_vendor.index.getStorageSync("userId");
+        const openid = common_vendor.index.getStorageSync("openid");
         const res = await common_vendor.Vs.callFunction({
           name: "getReadingHistory",
           data: {
@@ -110,7 +110,7 @@ const _sfc_main = {
           if (res.confirm) {
             common_vendor.index.showLoading({ title: "清空中..." });
             try {
-              const openid = common_vendor.index.getStorageSync("userId");
+              const openid = common_vendor.index.getStorageSync("openid");
               const res2 = await common_vendor.Vs.callFunction({
                 name: "clearReadingHistory",
                 data: { userId: openid }

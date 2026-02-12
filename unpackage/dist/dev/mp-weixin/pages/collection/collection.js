@@ -106,7 +106,7 @@ const _sfc_main = {
             return;
           }
         }
-        const openid = common_vendor.index.getStorageSync("userId");
+        const openid = common_vendor.index.getStorageSync("openid");
         const category = this.categories[this.currentCategory].category;
         const res = await common_vendor.Vs.callFunction({
           name: "getCollections",
@@ -179,7 +179,7 @@ const _sfc_main = {
           if (res.confirm) {
             common_vendor.index.showLoading({ title: "删除中..." });
             try {
-              const openid = common_vendor.index.getStorageSync("userId");
+              const openid = common_vendor.index.getStorageSync("openid");
               const res2 = await common_vendor.Vs.callFunction({
                 name: "batchUncollect",
                 data: {

@@ -8,14 +8,14 @@
 const db = uniCloud.database();
 
 exports.main = async (event, context) => {
-    const { userId:openid, role, roleDetail } = event;
+    const { userId: openid, role, roleDetail } = event;
 
     try {
         // 1. 校验参数
-        if (!userId) {
+        if (!openid) {
             return {
                 code: 1001,
-                message: '参数错误：缺少userId'
+                message: '参数错误：缺少openid'
             };
         }
 
@@ -35,18 +35,18 @@ exports.main = async (event, context) => {
             };
         }
 
-        // 3. 更新用户角色
+        // 3. 更新用户角色（使用 openid 作为 _id）
         const updateData = {
             role: role,
             roleDetail: roleDetail || {},
             updateTime: Date.now()
         };
 
-        await db.collection('users').doc(userId).update(updateData);
+        await db.collection('users').doc(openid).update(updateData);
 
         // 4. 记录操作日志
         await db.collection('operation_logs').add({
-            userId,
+            userId: openid,
             action: 'set_role',
             target: 'user',
             detail: {
@@ -56,13 +56,13 @@ exports.main = async (event, context) => {
             createTime: Date.now()
         });
 
-        console.log('用户角色设置成功:', userId, role);
+        console.log('用户角色设置成功:', openid, role);
 
         return {
             code: 0,
             message: '角色设置成功',
             data: {
-                userId,
+                userId: openid,
                 role,
                 roleDetail
             }

@@ -4,14 +4,10 @@ const db = uniCloud.database();
 
 module.exports = {
 	async main(event) {
-		// 注意：userId 是前端存储的 users 表 _id
-		// 但其他表存储的是 openid（微信标识）
-		const { userId } = event;
 		const { userId: openid } = event;
 
 		console.log('=== deleteUserAccount ===');
-		console.log('userId (users表的_id):', userId);
-		console.log('openid (微信标识):', openid);
+		console.log('openid:', openid);
 
 		if (!openid) {
 			return {
@@ -51,9 +47,9 @@ module.exports = {
 			}).remove();
 			console.log('删除订阅记录成功');
 
-			// 删除用户表中的用户记录,可以正常删除
-			await db.collection('users').doc(userId).remove();
-			console.log('用户表记录成功');
+			// 删除用户表中的用户记录（使用 openid 作为 _id）
+			await db.collection('users').doc(openid).remove();
+			console.log('用户表记录删除成功');
 
 			console.log('账号注销成功');
 

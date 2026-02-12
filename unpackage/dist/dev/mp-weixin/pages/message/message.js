@@ -43,7 +43,7 @@ const _sfc_main = {
             }
           }
         }
-        const openid = common_vendor.index.getStorageSync("userId");
+        const openid = common_vendor.index.getStorageSync("openid");
         const res = await common_vendor.Vs.callFunction({
           name: "getMessages",
           data: {
@@ -99,7 +99,7 @@ const _sfc_main = {
     },
     async markAsRead(messageId) {
       try {
-        const openid = common_vendor.index.getStorageSync("userId");
+        const openid = common_vendor.index.getStorageSync("openid");
         await common_vendor.Vs.callFunction({
           name: "markMessageRead",
           data: {
@@ -118,7 +118,7 @@ const _sfc_main = {
         success: async (res) => {
           if (res.confirm) {
             try {
-              const openid = common_vendor.index.getStorageSync("userId");
+              const openid = common_vendor.index.getStorageSync("openid");
               await common_vendor.Vs.callFunction({
                 name: "markMessageRead",
                 data: {

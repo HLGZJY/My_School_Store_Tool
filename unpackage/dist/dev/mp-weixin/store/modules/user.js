@@ -4,6 +4,7 @@ const user = {
   namespaced: true,
   state: {
     userId: null,
+    // 现在等于 openid
     token: null,
     userInfo: null
   },
@@ -35,10 +36,10 @@ const user = {
         data: { code, userInfo }
       });
       if (res.result.code === 0) {
-        const { userId, token } = res.result.data;
+        const { userId, openid, token } = res.result.data;
         commit("setUserId", userId);
         commit("setToken", token);
-        common_vendor.index.setStorageSync("userId", userId);
+        common_vendor.index.setStorageSync("openid", openid);
         common_vendor.index.setStorageSync("token", token);
       }
       return res.result;

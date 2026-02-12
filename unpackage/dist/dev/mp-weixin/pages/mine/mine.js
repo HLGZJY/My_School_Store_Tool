@@ -27,7 +27,7 @@ const _sfc_main = {
   },
   methods: {
     async loadData() {
-      const openid = this.$store.state.user.userId || common_vendor.index.getStorageSync("userId");
+      const openid = common_vendor.index.getStorageSync("openid");
       if (!openid)
         return;
       try {
@@ -43,7 +43,7 @@ const _sfc_main = {
       }
     },
     async loadUnread() {
-      const openid = this.$store.state.user.userId || common_vendor.index.getStorageSync("userId");
+      const openid = common_vendor.index.getStorageSync("openid");
       if (!openid)
         return;
       try {
@@ -135,16 +135,15 @@ const _sfc_main = {
                 if (res2.confirm) {
                   common_vendor.index.showLoading({ title: "注销中..." });
                   try {
-                    const userId = common_vendor.index.getStorageSync("userId");
                     const openid = common_vendor.index.getStorageSync("openid");
-                    if (!userId || !openid) {
+                    if (!openid) {
                       common_vendor.index.hideLoading();
                       common_vendor.index.showToast({ title: "用户未登录", icon: "none" });
                       return;
                     }
                     const res3 = await common_vendor.Vs.callFunction({
                       name: "deleteUserAccount",
-                      data: { userId, openid }
+                      data: { userId: openid }
                     });
                     if (res3.result.code === 0) {
                       common_vendor.index.showToast({ title: "账号已注销", icon: "success" });

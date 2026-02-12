@@ -34,12 +34,12 @@ const _sfc_main = {
       console.log("Cloud initialized");
     },
     checkLoginStatus() {
-      const userId = common_vendor.index.getStorageSync("userId");
+      const openid = common_vendor.index.getStorageSync("openid");
       const token = common_vendor.index.getStorageSync("token");
-      if (userId && token) {
-        this.$store.commit("user/setUserId", userId);
+      if (openid && token) {
+        this.$store.commit("user/setUserId", openid);
         this.$store.commit("user/setToken", token);
-        this.getUserInfoAndCheckRole(userId);
+        this.getUserInfoAndCheckRole(openid);
       } else {
         common_vendor.index.reLaunch({
           url: "/pages/login/login"

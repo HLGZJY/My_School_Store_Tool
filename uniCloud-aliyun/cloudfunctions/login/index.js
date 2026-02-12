@@ -35,6 +35,35 @@ async function getOpenidByCode(code) {
     }
 }
 
+/**
+ * 查询用户信息（只查询，不创建）
+ * @param {string} openid - 微信 openid
+ */
+async function queryUser(openid) {
+    const userQuery = await db.collection('users')
+        .where({ openid })
+        .get();
+
+    if (userQuery.data && userQuery.data.length > 0) {
+        const userData = userQuery.data[0];
+        return {
+            exists: true,
+            user: {
+                userId: userData._id,
+                openid: userData.openid,
+                hasRole: !!userData.role,
+                userInfo: {
+                    _id: userData._id,
+                    nickname: userData.nickname,
+                    avatar: userData.avatar,
+                    role: userData.role
+                }
+            }
+        };
+    }
+    return { exists: false };
+}
+
 exports.main = async (event, context) => {
     const { code, userInfo } = event;
 
@@ -67,32 +96,34 @@ exports.main = async (event, context) => {
             };
         }
 
-        // 3. 恢复模式查询（不需要 openid）
-        if (code === 'restore' && event.userId) {
-            const userQuery = await db.collection('users')
-                .doc(event.userId)
-                .get();
+        // 3. 只查询模式（userInfo 为 null 或 undefined）
+        // 用于自动登录检测，不创建新用户
+        if (!userInfo) {
+            const queryResult = await queryUser(openid);
 
-            if (userQuery.data) {
+            if (queryResult.exists) {
+                // 用户已存在，直接返回
+                const token = Buffer.from(JSON.stringify({
+                    userId: queryResult.user.userId,
+                    openid,
+                    exp: Date.now() + 7 * 24 * 60 * 60 * 1000
+                })).toString('base64');
+
                 return {
                     code: 0,
                     message: '获取成功',
                     data: {
-                        userId: userQuery.data._id,
-                        openid: userQuery.data.openid,
-                        hasRole: !!userQuery.data.role,
-                        userInfo: {
-                            _id: userQuery.data._id,
-                            nickname: userQuery.data.nickname,
-                            avatar: userQuery.data.avatar,
-                            role: userQuery.data.role
-                        }
+                        ...queryResult.user,
+                        token,
+                        isNewUser: false
                     }
                 };
             } else {
+                // 用户不存在，需要前端提供用户信息
                 return {
                     code: 1002,
-                    message: '用户不存在'
+                    message: '用户不存在',
+                    data: { needsUserInfo: true }
                 };
             }
         }
@@ -106,8 +137,8 @@ exports.main = async (event, context) => {
         let isNewUser = false;
 
         if (userQuery.data.length === 0) {
-            // 5. 新用户：创建用户记录
-            const addResult = await db.collection('users').add({
+            // 5. 新用户：创建用户记录，使用 openid 作为 _id
+            await db.collection('users').doc(openid).set({
                 openid,
                 nickname: userInfo?.nickName || '微信用户',
                 avatar: userInfo?.avatarUrl || '',
@@ -128,13 +159,13 @@ exports.main = async (event, context) => {
                 lastLoginTime: Date.now()
             });
 
-            userId = addResult.id;
+            userId = openid;  // _id 就是 openid
             isNewUser = true;
             console.log('新用户创建成功:', userId);
         } else {
             // 6. 老用户：更新登录信息
             const existingUser = userQuery.data[0];
-            userId = existingUser._id;
+            userId = existingUser._id;  // 保持 _id 不变
 
             // 确保 stats 字段存在
             const updateData = {

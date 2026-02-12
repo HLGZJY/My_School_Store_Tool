@@ -115,7 +115,7 @@ export default {
             this.loading = !refresh
 
             try {
-                const openid = uni.getStorageSync('userId')
+                const openid = uni.getStorageSync('openid')
 
                 const res = await uniCloud.callFunction({
                     name: 'getReadingHistory',
@@ -166,7 +166,7 @@ export default {
                         uni.showLoading({ title: '清空中...' })
 
                         try {
-                            const openid = uni.getStorageSync('userId')
+                            const openid = uni.getStorageSync('openid')
 
                             const res = await uniCloud.callFunction({
                                 name: 'clearReadingHistory',

@@ -86,7 +86,7 @@ export default {
                     }
                 }
 
-                const openid = uni.getStorageSync('userId')
+                const openid = uni.getStorageSync('openid')
 
                 const res = await uniCloud.callFunction({
                     name: 'getMessages',
@@ -154,7 +154,7 @@ export default {
 
         async markAsRead(messageId) {
             try {
-                const openid = uni.getStorageSync('userId')
+                const openid = uni.getStorageSync('openid')
                 await uniCloud.callFunction({
                     name: 'markMessageRead',
                     data: {
@@ -174,7 +174,7 @@ export default {
                 success: async (res) => {
                     if (res.confirm) {
                         try {
-                            const openid = uni.getStorageSync('userId')
+                            const openid = uni.getStorageSync('openid')
                             await uniCloud.callFunction({
                                 name: 'markMessageRead',
                                 data: {

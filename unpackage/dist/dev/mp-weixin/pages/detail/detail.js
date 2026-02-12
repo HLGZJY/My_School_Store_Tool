@@ -51,7 +51,7 @@ const _sfc_main = {
     },
     async loadCollectStatus() {
       try {
-        const openid = this.$store.state.user.userId || common_vendor.index.getStorageSync("userId");
+        const openid = common_vendor.index.getStorageSync("openid");
         if (!openid) {
           console.log("loadCollectStatus: 未登录，不检查收藏状态");
           return;
@@ -60,7 +60,6 @@ const _sfc_main = {
           name: "getCollections",
           data: {
             userId: openid,
-            // 方案A：传递 openid
             articleId: this.articleId,
             pageSize: 1
           }
@@ -74,7 +73,7 @@ const _sfc_main = {
     },
     async recordRead() {
       try {
-        const openid = this.$store.state.user.userId;
+        const openid = common_vendor.index.getStorageSync("openid");
         common_vendor.Vs.callFunction({
           name: "recordRead",
           data: {
@@ -88,7 +87,7 @@ const _sfc_main = {
       }
     },
     async toggleCollect() {
-      const openid = this.$store.state.user.userId || common_vendor.index.getStorageSync("userId");
+      const openid = common_vendor.index.getStorageSync("openid");
       if (!openid) {
         common_vendor.index.showToast({
           title: "请先登录",
@@ -101,7 +100,6 @@ const _sfc_main = {
           name: "collectArticle",
           data: {
             userId: openid,
-            // 方案A：传递 openid
             articleId: this.articleId,
             action: this.isCollected ? "uncollect" : "collect"
           }

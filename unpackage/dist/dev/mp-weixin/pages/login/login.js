@@ -6,14 +6,54 @@ const _sfc_main = {
     return "";
   },
   onLoad() {
-    const userId = this.$store.state.user.userId;
-    if (userId) {
-      common_vendor.index.switchTab({
-        url: "/pages/index/index"
-      });
-    }
+    this.autoLogin();
   },
   methods: {
+    async autoLogin() {
+      const loginRes = await common_vendor.index.login({
+        provider: "weixin"
+      });
+      try {
+        common_vendor.index.showLoading({ title: "检测中..." });
+        const res = await common_vendor.Vs.callFunction({
+          name: "login",
+          data: {
+            code: loginRes.code,
+            userInfo: null
+            // null 表示只查询不创建
+          }
+        });
+        common_vendor.index.hideLoading();
+        if (res.result.code === 0) {
+          const { userId, openid, token, hasRole, isNewUser } = res.result.data;
+          this.$store.commit("user/setUserId", userId);
+          this.$store.commit("user/setToken", token);
+          this.$store.commit("user/setUserInfo", res.result.data.userInfo);
+          common_vendor.index.setStorageSync("openid", openid);
+          common_vendor.index.setStorageSync("token", token);
+          if (!hasRole) {
+            common_vendor.index.redirectTo({
+              url: "/pages/role/role"
+            });
+          } else {
+            common_vendor.index.showToast({
+              title: "登录成功",
+              icon: "success"
+            });
+            setTimeout(() => {
+              common_vendor.index.switchTab({
+                url: "/pages/index/index"
+              });
+            }, 1e3);
+          }
+        } else {
+          console.log("需要新用户注册");
+        }
+      } catch (error) {
+        console.error("自动登录失败:", error);
+        common_vendor.index.hideLoading();
+      }
+    },
     onGetUserInfo(e) {
       if (e.detail.userInfo) {
         this.userInfo = e.detail.userInfo;
@@ -43,7 +83,6 @@ const _sfc_main = {
           this.$store.commit("user/setUserId", userId);
           this.$store.commit("user/setToken", token);
           this.$store.commit("user/setUserInfo", res.result.data.userInfo);
-          common_vendor.index.setStorageSync("userId", userId);
           common_vendor.index.setStorageSync("openid", openid);
           common_vendor.index.setStorageSync("token", token);
           common_vendor.index.hideLoading();

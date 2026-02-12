@@ -179,7 +179,7 @@ export default {
                     }
                 }
 
-                const openid = uni.getStorageSync('userId')
+                const openid = uni.getStorageSync('openid')
                 const category = this.categories[this.currentCategory].category
 
                 const res = await uniCloud.callFunction({
@@ -263,7 +263,7 @@ export default {
                         uni.showLoading({ title: '删除中...' })
 
                         try {
-                            const openid = uni.getStorageSync('userId')
+                            const openid = uni.getStorageSync('openid')
                             const res = await uniCloud.callFunction({
                                 name: 'batchUncollect',
                                 data: {

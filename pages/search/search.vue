@@ -228,8 +228,8 @@ export default {
             uni.setStorageSync('searchHistory', history)
             this.searchHistory = history
 
-            // 方案A：获取 openid（从 store 或本地存储）
-            const openid = this.$store.state.user.userId || uni.getStorageSync('userId') || 'anonymous'
+            // 获取 openid
+            const openid = uni.getStorageSync('openid') || 'anonymous'
 
             // 上报搜索记录
             uniCloud.callFunction({
@@ -237,7 +237,7 @@ export default {
                 data: {
                     keyword: this.keyword,
                     resultCount: this.articles.length,
-                    userId: openid  // 方案A：传递 openid
+                    userId: openid
                 }
             })
         },

@@ -174,14 +174,13 @@ const _sfc_main = {
       history = history.slice(0, 10);
       common_vendor.index.setStorageSync("searchHistory", history);
       this.searchHistory = history;
-      const openid = this.$store.state.user.userId || common_vendor.index.getStorageSync("userId") || "anonymous";
+      const openid = common_vendor.index.getStorageSync("openid") || "anonymous";
       common_vendor.Vs.callFunction({
         name: "reportSearch",
         data: {
           keyword: this.keyword,
           resultCount: this.articles.length,
           userId: openid
-          // 方案A：传递 openid
         }
       });
     },

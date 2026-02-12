@@ -32,15 +32,68 @@ export default {
     	return '';
     },
     onLoad() {
-        // 检查是否已登录
-        const userId = this.$store.state.user.userId
-        if (userId) {
-            uni.switchTab({
-                url: '/pages/index/index'
-            })
-        }
+        // 自动获取微信登录并检测用户状态
+        this.autoLogin()
     },
     methods: {
+        async autoLogin() {
+            // 获取微信登录code
+            const loginRes = await uni.login({
+                provider: 'weixin'
+            })
+
+            try {
+                uni.showLoading({ title: '检测中...' })
+
+                // 调用云函数，自动查询用户状态
+                const res = await uniCloud.callFunction({
+                    name: 'login',
+                    data: {
+                        code: loginRes.code,
+                        userInfo: null  // null 表示只查询不创建
+                    }
+                })
+
+                uni.hideLoading()
+
+                if (res.result.code === 0) {
+                    const { userId, openid, token, hasRole, isNewUser } = res.result.data
+
+                    // 保存用户信息
+                    this.$store.commit('user/setUserId', userId)
+                    this.$store.commit('user/setToken', token)
+                    this.$store.commit('user/setUserInfo', res.result.data.userInfo)
+                    uni.setStorageSync('openid', openid)
+                    uni.setStorageSync('token', token)
+
+                    // 根据用户状态跳转
+                    if (!hasRole) {
+                        // 新用户或未设置角色，跳转到角色选择
+                        uni.redirectTo({
+                            url: '/pages/role/role'
+                        })
+                    } else {
+                        // 老用户，直接进入首页
+                        uni.showToast({
+                            title: '登录成功',
+                            icon: 'success'
+                        })
+                        setTimeout(() => {
+                            uni.switchTab({
+                                url: '/pages/index/index'
+                            })
+                        }, 1000)
+                    }
+                } else {
+                    // 用户不存在，需要走完整登录流程（获取用户信息）
+                    console.log('需要新用户注册')
+                }
+            } catch (error) {
+                console.error('自动登录失败:', error)
+                uni.hideLoading()
+            }
+        },
+
         onGetUserInfo(e) {
             if (e.detail.userInfo) {
                 this.userInfo = e.detail.userInfo
@@ -79,7 +132,7 @@ export default {
                     this.$store.commit('user/setToken', token)
                     this.$store.commit('user/setUserInfo', res.result.data.userInfo)
 
-                    uni.setStorageSync('userId', userId)
+                    // 存储用户信息
                     uni.setStorageSync('openid', openid)
                     uni.setStorageSync('token', token)
 

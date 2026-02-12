@@ -24,16 +24,16 @@ export default {
 
         checkLoginStatus() {
             // 检查登录状态
-            const userId = uni.getStorageSync('userId')
+            const openid = uni.getStorageSync('openid')
             const token = uni.getStorageSync('token')
 
-            if (userId && token) {
+            if (openid && token) {
                 // 已登录，恢复状态
-                this.$store.commit('user/setUserId', userId)
+                this.$store.commit('user/setUserId', openid)
                 this.$store.commit('user/setToken', token)
 
                 // 获取完整用户信息（检查是否有角色）
-                this.getUserInfoAndCheckRole(userId)
+                this.getUserInfoAndCheckRole(openid)
             } else {
                 // 未登录，跳转到登录页
                 uni.reLaunch({

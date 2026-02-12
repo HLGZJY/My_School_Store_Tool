@@ -1,7 +1,7 @@
 export default {
     namespaced: true,
     state: {
-        userId: null,
+        userId: null,  // 现在等于 openid
         token: null,
         userInfo: null
     },
@@ -34,10 +34,11 @@ export default {
             })
 
             if (res.result.code === 0) {
-                const { userId, token } = res.result.data
+                const { userId, openid, token } = res.result.data
                 commit('setUserId', userId)
                 commit('setToken', token)
-                uni.setStorageSync('userId', userId)
+                // 存储 openid（现在 userId 就是 openid）
+                uni.setStorageSync('openid', openid)
                 uni.setStorageSync('token', token)
             }
 
