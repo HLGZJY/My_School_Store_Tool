@@ -2,11 +2,11 @@
     <view class="section">
         <view class="section-header">
             <text class="section-title">🔥 热门排行</text>
-            <text class="more-link" @click="viewMore">查看更多</text>
+            <text class="more-link" @click="toggleExpand">{{ expanded ? '收起' : '查看更多' }}</text>
         </view>
         <view class="ranking-list">
             <view
-                v-for="(item, index) in ranking"
+                v-for="(item, index) in displayRanking"
                 :key="item._id"
                 class="ranking-item"
                 @click="goToDetail(item._id)"
@@ -30,10 +30,23 @@ export default {
             default: () => []
         }
     },
-    emits: ['more', 'detail'],
+    emits: ['detail'],
+    data() {
+        return {
+            expanded: false
+        }
+    },
+    computed: {
+        displayRanking() {
+            if (this.expanded) {
+                return this.ranking
+            }
+            return this.ranking.slice(0, 5)
+        }
+    },
     methods: {
-        viewMore() {
-            this.$emit('more')
+        toggleExpand() {
+            this.expanded = !this.expanded
         },
         goToDetail(id) {
             this.$emit('detail', id)

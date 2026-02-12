@@ -3,7 +3,6 @@
         <!-- 热门排行 -->
         <HotRanking
             :ranking="ranking"
-            @more="viewMoreRanking"
             @detail="goToDetail"
         />
 
@@ -162,14 +161,6 @@ export default {
         searchTag(tagName) {
             uni.navigateTo({
                 url: `/pages/search/search?keyword=${tagName}`
-            })
-        },
-
-        // 查看更多排行
-        viewMoreRanking() {
-            uni.showToast({
-                title: '功能开发中',
-                icon: 'none'
             })
         },
 
