@@ -1,14 +1,17 @@
 <template>
     <view class="user-card">
-        <image class="avatar" :src="avatar" mode="aspectFill"></image>
+        <image class="avatar" :src="avatar" mode="aspectFill" @click="$emit('click')"></image>
         <view class="info">
-            <text class="nickname">{{ nickname }}</text>
+            <text class="nickname">{{ nickname || '未登录' }}</text>
             <view v-if="role" class="role-badge">
                 <text>{{ roleName }}</text>
             </view>
+            <view v-if="roleDetailText" class="role-detail">
+                <text>{{ roleDetailText }}</text>
+            </view>
         </view>
         <view class="switch-btn" @click="$emit('switchRole')">
-            <text>切换身份</text>
+            <text>编辑资料</text>
         </view>
     </view>
 </template>
@@ -18,13 +21,35 @@ export default {
     name: 'UserCard',
     props: {
         avatar: { type: String, default: '/static/logo.png' },
-        nickname: { type: String, default: '未登录' },
-        role: { type: String, default: '' }
+        nickname: { type: String, default: '' },
+        role: { type: String, default: '' },
+        roleDetail: { type: Object, default: () => ({}) }
     },
     computed: {
         roleName() {
             const map = { student: '学生', teacher: '教师', admin: '行政人员' };
             return map[this.role] || '';
+        },
+        roleDetailText() {
+            if (!this.role || !this.roleDetail) return '';
+
+            if (this.role === 'student') {
+                const { college, grade } = this.roleDetail;
+                const parts = [];
+                if (college) parts.push(college);
+                if (grade) parts.push(grade);
+                return parts.join(' · ');
+            }
+
+            if (this.role === 'teacher') {
+                return this.roleDetail.department || '';
+            }
+
+            if (this.role === 'admin') {
+                return this.roleDetail.department || '';
+            }
+
+            return '';
         }
     }
 };
@@ -33,7 +58,7 @@ export default {
 <style lang="scss" scoped>
 .user-card {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     padding: 40px 20px 24px;
     background-color: #FFFFFF;
 }
@@ -64,6 +89,12 @@ export default {
     border-radius: 12px;
     font-size: 12px;
     color: #00D4AA;
+    margin-bottom: 8px;
+}
+
+.role-detail {
+    font-size: 13px;
+    color: #718096;
 }
 
 .switch-btn {

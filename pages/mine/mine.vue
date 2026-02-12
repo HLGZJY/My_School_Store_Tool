@@ -2,8 +2,10 @@
     <view class="container">
         <UserCard
             :avatar="userInfo.avatar"
-            :nickname="userInfo.nickname || '未登录'"
+            :nickname="userInfo.nickname"
             :role="userInfo.role"
+            :roleDetail="userInfo.roleDetail"
+            @click="goToRole"
             @switchRole="goToRole"
         />
 
