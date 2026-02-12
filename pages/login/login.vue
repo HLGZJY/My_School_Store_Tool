@@ -72,7 +72,7 @@ export default {
                 })
 
                 if (res.result.code === 0) {
-                    const { userId, token, hasRole } = res.result.data
+                    const { userId, openid, token, hasRole } = res.result.data
 
                     // 使用store保存用户信息
                     this.$store.commit('user/setUserId', userId)
@@ -80,6 +80,7 @@ export default {
                     this.$store.commit('user/setUserInfo', res.result.data.userInfo)
 
                     uni.setStorageSync('userId', userId)
+                    uni.setStorageSync('openid', openid)
                     uni.setStorageSync('token', token)
 
                     uni.hideLoading()

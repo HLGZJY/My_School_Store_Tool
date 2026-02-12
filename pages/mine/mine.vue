@@ -219,15 +219,17 @@ export default {
                                     try {
                                         // 从本地存储获取用户标识
                                         // userId 是 users 表的 _id
+                                        // openid 是微信标识，用于删除其他表
                                         const userId = uni.getStorageSync('userId');
-                                        if (!userId) {
+                                        const openid = uni.getStorageSync('openid');
+                                        if (!userId || !openid) {
                                             uni.hideLoading();
                                             uni.showToast({ title: '用户未登录', icon: 'none' });
                                             return;
                                         }
                                         const res3 = await uniCloud.callFunction({
                                             name: 'deleteUserAccount',
-                                            data: { userId }
+                                            data: { userId, openid }
                                         });
                                         if (res3.result.code === 0) {
                                             uni.showToast({ title: '账号已注销', icon: 'success' });
