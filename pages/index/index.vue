@@ -5,14 +5,14 @@
             <uni-icons type="search" size="18" color="#A0AEC0"></uni-icons>
             <text class="placeholder">搜索通知、讲座、活动...</text>
         </view>
-
-        <!-- 筛选面板 -->
-        <FilterPanel
-            :sources="sources"
-            :tags="tagOptions"
-            @filterChange="onFilterChange"
-            ref="filterRef"
-        />
+		
+		 <!-- 筛选面板 -->
+		        <FilterPanel
+		            :sources="sources"
+		            :tags="tagOptions"
+		            @filterChange="onFilterChange"
+		            ref="filterRef"
+		        />
 
         <!-- 分类Tab -->
         <scroll-view class="tab-scroll" scroll-x :show-scrollbar="false">
@@ -53,7 +53,7 @@
             class="article-scroll"
             scroll-y
             refresher-enabled
-            refresher-triggered="{{refresherTriggered}}"
+            refresher-triggered="refresherTriggered"
             @refresherrefresh="onRefresh"
             @scrolltolower="onLoadMore"
             scroll-into-view="scrollIntoView"
@@ -90,8 +90,9 @@
                     <view
                         class="card-content"
                         :class="{ 'swipe-offset': swipeShowIndex === index }"
-                        @touchstart="onTouchStart($event, index)"
+                        @touchstart="onTouchStart"
                         @touchend="onTouchEnd"
+                        @touchmove="onTouchMove"
                     >
                         <ArticleCard :article="article" />
                     </view>
@@ -138,25 +139,25 @@ export default {
             loading: false,
             hasMore: true,
             refresherTriggered: false,
-
-            // 筛选条件
-            filterSourceId: '',
-            filterTag: '',
-            filterTimeRange: '',
-
-            // 数据源配置
-            sources: [
-                { id: 'jwc', name: '教务处' },
-                { id: 'library', name: '图书馆' },
-                { id: 'xsc', name: '学生处' },
-                { id: 'cs', name: '计算机学院' },
-                { id: 'jyzd', name: '就业指导中心' },
-                { id: 'yjs', name: '研究生院' },
-                { id: 'kjc', name: '科技处' },
-                { id: 'rsc', name: '人事处' }
-            ],
-            tagOptions: ['通知', '讲座', '活动', '竞赛', '讲座预告', '考试通知', '比赛', '招聘'],
-
+			
+			// 筛选条件
+			            filterSourceId: '',
+			            filterTag: '',
+			            filterTimeRange: '',
+			
+			            // 数据源配置
+			            sources: [
+			                { id: 'jwc', name: '教务处' },
+			                { id: 'library', name: '图书馆' },
+			                { id: 'xsc', name: '学生处' },
+			                { id: 'cs', name: '计算机学院' },
+			                { id: 'jyzd', name: '就业指导中心' },
+			                { id: 'yjs', name: '研究生院' },
+			                { id: 'kjc', name: '科技处' },
+			                { id: 'rsc', name: '人事处' }
+			            ],
+			            tagOptions: ['通知', '讲座', '活动', '竞赛', '讲座预告', '考试通知', '比赛', '招聘'],
+			
             // 滚动位置记录
             scrollPositions: {},
 
@@ -165,12 +166,11 @@ export default {
             touchStartX: 0,
             touchEndX: 0,
             touchThreshold: 50,
-            scrollIntoView: '',
-            currentTouchIndex: -1  // 当前触摸的卡片索引
+            scrollIntoView: ''
         };
     },
     onLoad() {
-        this.loadSources();
+		this.loadSources();
         this.loadArticles();
         this.loadRecommendations();
     },
@@ -178,71 +178,72 @@ export default {
         // 返回时刷新收藏状态
         this.refreshCollectionStatus();
     },
+	
     methods: {
-        // 加载数据源
-        async loadSources() {
-            try {
-                const res = await uniCloud.callFunction({
-                    name: 'getSubscribeSources'
-                });
-                if (res.result.code === 0 && res.result.data) {
-                    this.sources = res.result.data.map(s => ({
-                        id: s.id,
-                        name: s.name
-                    }));
-                }
-            } catch (e) {
-                console.error('加载数据源失败:', e);
-            }
-        },
-        // 筛选变化
-        onFilterChange(filters) {
-            this.filterSourceId = filters.sourceId;
-            this.filterTag = filters.tag;
-            this.filterTimeRange = filters.timeRange;
-            this.page = 1;
-            this.hasMore = true;
-            this.articleList = [];
-            this.loadArticles(true);
-        },
-        // 获取时间范围
-        getTimeRangeFilter() {
-            if (!this.filterTimeRange) return {};
-            const now = Date.now();
-            const ranges = {
-                '1d': 1 * 24 * 60 * 60 * 1000,
-                '7d': 7 * 24 * 60 * 60 * 1000,
-                '30d': 30 * 24 * 60 * 60 * 1000
-            };
-            const days = ranges[this.filterTimeRange] || 0;
-            if (days === 0) return {}; // 'all' 不过滤时间
-            return {
-                startTime: now - days,
-                endTime: now
-            };
-        },
+		// 加载数据源
+		        async loadSources() {
+		            try {
+		                const res = await uniCloud.callFunction({
+		                    name: 'getSubscribeSources'
+		                });
+		                if (res.result.code === 0 && res.result.data) {
+		                    this.sources = res.result.data.map(s => ({
+		                        id: s.id,
+		                        name: s.name
+		                    }));
+		                }
+		            } catch (e) {
+		                console.error('加载数据源失败:', e);
+		            }
+		        },
+		        // 筛选变化
+		        onFilterChange(filters) {
+		            this.filterSourceId = filters.sourceId;
+		            this.filterTag = filters.tag;
+		            this.filterTimeRange = filters.timeRange;
+		            this.page = 1;
+		            this.hasMore = true;
+		            this.articleList = [];
+		            this.loadArticles(true);
+		        },
+		        // 获取时间范围
+		        getTimeRangeFilter() {
+		            if (!this.filterTimeRange) return {};
+		            const now = Date.now();
+		            const ranges = {
+		                '1d': 1 * 24 * 60 * 60 * 1000,
+		                '7d': 7 * 24 * 60 * 60 * 1000,
+		                '30d': 30 * 24 * 60 * 60 * 1000
+		            };
+		            const days = ranges[this.filterTimeRange] || 0;
+		            if (days === 0) return {}; // 'all' 不过滤时间
+		            return {
+		                startTime: now - days,
+		                endTime: now
+		            };
+		        },
+				
         // 加载文章列表
         async loadArticles(isRefresh = false) {
             // 防止重复请求
-            if (isRefresh) {
-                // 下拉刷新时，直接停止刷新动画并重置状态
-                this.refresherTriggered = false
-                // 延迟重置，避免立即触发新的刷新
-                setTimeout(() => {
-                    this.refresherTriggered = false
-                }, 10)
-            }
-            if (this.loading && !isRefresh) return;
-
-            this.loading = !isRefresh; // 下拉刷新时不显示底部加载状态
-            if (isRefresh) {
-                this.refresherTriggered = true;
-            }
+                        if (isRefresh) {
+                            // 下拉刷新时，直接停止刷新动画并重置状态
+                            this.refresherTriggered = false
+                            // 延迟重置，避免立即触发新的刷新
+                            setTimeout(() => {
+                                this.refresherTriggered = false
+                            }, 10)
+                        }
+                        if (this.loading && !isRefresh) return;
+            
+                        this.loading = !isRefresh; // 下拉刷新时不显示底部加载状态
+                        if (isRefresh) {
+                            this.refresherTriggered = true;
+                        }
             const category = this.tabs[this.currentTab].category;
             const userRole = uni.getStorageSync('userRole') || 'student';
-
-            // 构建筛选参数
-            const timeFilter = this.getTimeRangeFilter();
+			// 构建筛选参数
+			            const timeFilter = this.getTimeRangeFilter();
 
             try {
                 const res = await uniCloud.callFunction({
@@ -252,42 +253,25 @@ export default {
                         pageSize: this.pageSize,
                         category,
                         userRole,
-                        sourceId: this.filterSourceId,
-                        tag: this.filterTag,
-                        startDate: timeFilter.startTime || 0,
-                        endDate: timeFilter.endTime || 0
+                                                sourceId: this.filterSourceId,
+                                                tag: this.filterTag,
+                                                startDate: timeFilter.startTime || 0,
+                                                endDate: timeFilter.endTime || 0
                     }
                 });
 
                 if (res.result.code === 0) {
                     const { articles, hasMore } = res.result.data;
 
-                    // 获取已收藏的文章ID列表
-                    const openid = uni.getStorageSync('userId');
-                    let collectedIds = [];
-                    if (openid) {
-                        try {
-                            const collectRes = await uniCloud.callFunction({
-                                name: 'getCollections',
-                                data: { userId: openid, pageSize: 500 }
-                            });
-                            if (collectRes.result.code === 0) {
-                                collectedIds = collectRes.result.data.collections.map(c => c.articleId);
-                            }
-                        } catch (e) {
-                            console.error('获取收藏状态失败:', e);
-                        }
-                    }
-
                     if (isRefresh) {
                         this.articleList = articles.map(a => ({
                             ...a,
-                            isCollected: collectedIds.includes(a._id)
+                            isCollected: this.checkIsCollected(a._id)
                         }));
                     } else {
                         const newArticles = articles.map(a => ({
                             ...a,
-                            isCollected: collectedIds.includes(a._id)
+                            isCollected: this.checkIsCollected(a._id)
                         }));
                         this.articleList = [...this.articleList, ...newArticles];
                     }
@@ -301,10 +285,10 @@ export default {
                 });
             } finally {
                 // 延迟清除刷新状态，避免闪烁
-                setTimeout(() => {
-                    this.loading = false;
-                    this.refresherTriggered = false;
-                }, 100);
+                                setTimeout(() => {
+                                    this.loading = false;
+                                    this.refresherTriggered = false;
+                                }, 100);
             }
         },
 
@@ -357,7 +341,6 @@ export default {
             this.page = 1;
             this.hasMore = true;
             this.articleList = [];
-            this.refresherTriggered = false;  // 重置刷新状态
 
             // 滚动到顶部
             this.scrollIntoView = 'article-list';
@@ -397,87 +380,63 @@ export default {
             uni.setStorageSync('readHistory', history);
         },
 
+        // 检查是否已收藏
+        checkIsCollected(articleId) {
+            const collections = uni.getStorageSync('collections') || [];
+            return collections.some(c => c._id === articleId);
+        },
+
         // 刷新收藏状态
-        async refreshCollectionStatus() {
-            const openid = uni.getStorageSync('userId');
-            if (!openid) return;
-
-            try {
-                const res = await uniCloud.callFunction({
-                    name: 'getCollections',
-                    data: {
-                        userId: openid,
-                        pageSize: 100
-                    }
-                });
-
-                if (res.result.code === 0) {
-                    const collectedIds = res.result.data.collections.map(c => c.articleId);
-                    this.articleList = this.articleList.map(article => ({
-                        ...article,
-                        isCollected: collectedIds.includes(article._id)
-                    }));
-                }
-            } catch (error) {
-                console.error('刷新收藏状态失败:', error);
-            }
+        refreshCollectionStatus() {
+            this.articleList = this.articleList.map(article => ({
+                ...article,
+                isCollected: this.checkIsCollected(article._id)
+            }));
         },
 
         // 切换收藏
-        async toggleCollect(article, index) {
-            const openid = uni.getStorageSync('userId');
-            if (!openid) {
+        toggleCollect(article, index) {
+            const collections = uni.getStorageSync('collections') || [];
+            const existingIndex = collections.findIndex(c => c._id === article._id);
+
+            if (existingIndex >= 0) {
+                // 取消收藏
+                collections.splice(existingIndex, 1);
                 uni.showToast({
-                    title: '请先登录',
+                    title: '已取消收藏',
                     icon: 'none'
                 });
-                return;
-            }
-
-            const isCollected = article.isCollected;
-            const action = isCollected ? 'uncollect' : 'collect';
-
-            try {
-                const res = await uniCloud.callFunction({
-                    name: 'collectArticle',
-                    data: {
-                        userId: openid,
-                        articleId: article._id,
-                        action: action
-                    }
+            } else {
+                // 添加收藏
+                collections.unshift({
+                    _id: article._id,
+                    title: article.title,
+                    sourceName: article.sourceName,
+                    publishTime: article.publishTime,
+                    collectTime: Date.now()
                 });
-
-                if (res.result.code === 0) {
-                    // 更新本地状态
-                    this.articleList[index].isCollected = !isCollected;
-                    this.swipeShowIndex = null;
-
-                    // 震动反馈
-                    uni.vibrateShort();
-
-                    uni.showToast({
-                        title: isCollected ? '已取消收藏' : '收藏成功',
-                        icon: 'success'
-                    });
-                } else {
-                    uni.showToast({
-                        title: res.result.message || '操作失败',
-                        icon: 'none'
-                    });
-                }
-            } catch (error) {
-                console.error('收藏操作失败:', error);
                 uni.showToast({
-                    title: '操作失败，请重试',
-                    icon: 'none'
+                    title: '收藏成功',
+                    icon: 'success'
                 });
+                // 震动反馈
+                uni.vibrateShort();
             }
+
+            uni.setStorageSync('collections', collections);
+
+            // 更新本地状态
+            this.articleList[index].isCollected = existingIndex < 0;
+            this.swipeShowIndex = null;
         },
 
         // 触摸事件处理
-        onTouchStart(e, index) {
+        onTouchStart(e) {
             this.touchStartX = e.changedTouches[0].clientX;
-            this.currentTouchIndex = index;
+        },
+
+        onTouchMove(e) {
+            // 阻止默认滚动，实现左滑效果
         },
 
         onTouchEnd(e) {
@@ -489,19 +448,15 @@ export default {
             const diff = this.touchStartX - this.touchEndX;
 
             if (diff > this.touchThreshold) {
-                // 左滑，显示当前触摸卡片的收藏按钮
-                if (this.currentTouchIndex >= 0 && this.currentTouchIndex < this.articleList.length) {
-                    // 关闭其他卡片的左滑状态
-                    if (this.swipeShowIndex !== this.currentTouchIndex) {
-                        this.swipeShowIndex = this.currentTouchIndex;
-                    }
-                }
+                // 左滑，显示收藏按钮
+                this.swipeShowIndex = this.articleList.findIndex((_, i) => {
+                    // 找到当前可见区域的卡片
+                    return true;
+                });
             } else if (diff < -this.touchThreshold) {
                 // 右滑，关闭
                 this.swipeShowIndex = null;
             }
-            // 重置当前触摸索引
-            this.currentTouchIndex = -1;
         }
     },
 

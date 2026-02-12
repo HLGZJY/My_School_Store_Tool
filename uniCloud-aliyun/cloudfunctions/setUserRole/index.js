@@ -8,7 +8,7 @@
 const db = uniCloud.database();
 
 exports.main = async (event, context) => {
-    const { userId, role, roleDetail } = event;
+    const { userId:openid, role, roleDetail } = event;
 
     try {
         // 1. 校验参数

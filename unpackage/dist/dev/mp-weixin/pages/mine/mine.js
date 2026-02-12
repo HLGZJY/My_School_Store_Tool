@@ -95,8 +95,8 @@ const _sfc_main = {
     },
     clearCache() {
       common_vendor.index.showModal({
-        title: "提示",
-        content: "确定清除缓存吗？",
+        title: "清除缓存",
+        // content: '清除该用户名下的所有记录，包括收藏、阅读历史、搜索历史、订阅信息等。请谨慎选择！',
         success: (res) => {
           if (res.confirm) {
             try {
@@ -116,6 +116,56 @@ const _sfc_main = {
         title: "联系我们",
         content: "如遇到问题，请通过以下方式联系我们：\n邮箱：support@example.com",
         showCancel: false
+      });
+    },
+    deleteAccount() {
+      common_vendor.index.showModal({
+        title: "注销账号",
+        content: "注销后将删除您的所有数据（收藏、阅读历史、搜索历史、订阅信息等），且无法恢复。确定要注销吗？",
+        confirmText: "确定注销",
+        confirmColor: "#EF4444",
+        success: async (res) => {
+          if (res.confirm) {
+            common_vendor.index.showModal({
+              title: "再次确认",
+              content: "注销后您将无法找回任何数据，请确认是否继续？",
+              confirmText: "确认注销",
+              confirmColor: "#EF4444",
+              async success(res2) {
+                if (res2.confirm) {
+                  common_vendor.index.showLoading({ title: "注销中..." });
+                  try {
+                    const userId = common_vendor.index.getStorageSync("userId");
+                    const openid = common_vendor.index.getStorageSync("openid");
+                    if (!userId || !openid) {
+                      common_vendor.index.hideLoading();
+                      common_vendor.index.showToast({ title: "用户未登录", icon: "none" });
+                      return;
+                    }
+                    const res3 = await common_vendor.Vs.callFunction({
+                      name: "deleteUserAccount",
+                      data: { userId, openid }
+                    });
+                    if (res3.result.code === 0) {
+                      common_vendor.index.showToast({ title: "账号已注销", icon: "success" });
+                      setTimeout(() => {
+                        common_vendor.index.clearStorageSync();
+                        common_vendor.index.reLaunch({ url: "/pages/login/login" });
+                      }, 1500);
+                    } else {
+                      common_vendor.index.showToast({ title: res3.result.message || "注销失败", icon: "none" });
+                    }
+                  } catch (error) {
+                    console.error("注销失败:", error);
+                    common_vendor.index.showToast({ title: "注销失败，请重试", icon: "none" });
+                  } finally {
+                    common_vendor.index.hideLoading();
+                  }
+                }
+              }
+            });
+          }
+        }
       });
     },
     logout() {
@@ -205,7 +255,18 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       color: "#A0AEC0"
     }),
     v: common_vendor.o((...args) => $options.contactUs && $options.contactUs(...args)),
-    w: common_vendor.o((...args) => $options.logout && $options.logout(...args))
+    w: common_vendor.p({
+      type: "close",
+      size: "20",
+      color: "#EF4444"
+    }),
+    x: common_vendor.p({
+      type: "arrowright",
+      size: "16",
+      color: "#A0AEC0"
+    }),
+    y: common_vendor.o((...args) => $options.deleteAccount && $options.deleteAccount(...args)),
+    z: common_vendor.o((...args) => $options.logout && $options.logout(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-7c2ebfa5"]]);

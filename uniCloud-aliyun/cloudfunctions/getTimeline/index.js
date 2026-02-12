@@ -16,7 +16,7 @@ module.exports = {
             const res = await db.collection('articles')
                 .where({
                     status: 'published',
-                    // publishTime: db.command.gte(sevenDaysAgo)
+                    publishTime: db.command.gte(sevenDaysAgo)
                 })
                 .orderBy('publishTime', 'desc')
                 .get();

@@ -47,9 +47,7 @@ const _sfc_main = {
       touchStartX: 0,
       touchEndX: 0,
       touchThreshold: 50,
-      scrollIntoView: "",
-      currentTouchIndex: -1
-      // 当前触摸的卡片索引
+      scrollIntoView: ""
     };
   },
   onLoad() {
@@ -138,30 +136,15 @@ const _sfc_main = {
         });
         if (res.result.code === 0) {
           const { articles, hasMore } = res.result.data;
-          const openid = common_vendor.index.getStorageSync("userId");
-          let collectedIds = [];
-          if (openid) {
-            try {
-              const collectRes = await common_vendor.Vs.callFunction({
-                name: "getCollections",
-                data: { userId: openid, pageSize: 500 }
-              });
-              if (collectRes.result.code === 0) {
-                collectedIds = collectRes.result.data.collections.map((c) => c.articleId);
-              }
-            } catch (e) {
-              console.error("获取收藏状态失败:", e);
-            }
-          }
           if (isRefresh) {
             this.articleList = articles.map((a) => ({
               ...a,
-              isCollected: collectedIds.includes(a._id)
+              isCollected: this.checkIsCollected(a._id)
             }));
           } else {
             const newArticles = articles.map((a) => ({
               ...a,
-              isCollected: collectedIds.includes(a._id)
+              isCollected: this.checkIsCollected(a._id)
             }));
             this.articleList = [...this.articleList, ...newArticles];
           }
@@ -221,7 +204,6 @@ const _sfc_main = {
       this.page = 1;
       this.hasMore = true;
       this.articleList = [];
-      this.refresherTriggered = false;
       this.scrollIntoView = "article-list";
       this.loadArticles(true);
     },
@@ -250,77 +232,51 @@ const _sfc_main = {
       history = history.slice(0, 50);
       common_vendor.index.setStorageSync("readHistory", history);
     },
+    // 检查是否已收藏
+    checkIsCollected(articleId) {
+      const collections = common_vendor.index.getStorageSync("collections") || [];
+      return collections.some((c) => c._id === articleId);
+    },
     // 刷新收藏状态
-    async refreshCollectionStatus() {
-      const openid = common_vendor.index.getStorageSync("userId");
-      if (!openid)
-        return;
-      try {
-        const res = await common_vendor.Vs.callFunction({
-          name: "getCollections",
-          data: {
-            userId: openid,
-            pageSize: 100
-          }
-        });
-        if (res.result.code === 0) {
-          const collectedIds = res.result.data.collections.map((c) => c.articleId);
-          this.articleList = this.articleList.map((article) => ({
-            ...article,
-            isCollected: collectedIds.includes(article._id)
-          }));
-        }
-      } catch (error) {
-        console.error("刷新收藏状态失败:", error);
-      }
+    refreshCollectionStatus() {
+      this.articleList = this.articleList.map((article) => ({
+        ...article,
+        isCollected: this.checkIsCollected(article._id)
+      }));
     },
     // 切换收藏
-    async toggleCollect(article, index) {
-      const openid = common_vendor.index.getStorageSync("userId");
-      if (!openid) {
+    toggleCollect(article, index) {
+      const collections = common_vendor.index.getStorageSync("collections") || [];
+      const existingIndex = collections.findIndex((c) => c._id === article._id);
+      if (existingIndex >= 0) {
+        collections.splice(existingIndex, 1);
         common_vendor.index.showToast({
-          title: "请先登录",
+          title: "已取消收藏",
           icon: "none"
         });
-        return;
-      }
-      const isCollected = article.isCollected;
-      const action = isCollected ? "uncollect" : "collect";
-      try {
-        const res = await common_vendor.Vs.callFunction({
-          name: "collectArticle",
-          data: {
-            userId: openid,
-            articleId: article._id,
-            action
-          }
+      } else {
+        collections.unshift({
+          _id: article._id,
+          title: article.title,
+          sourceName: article.sourceName,
+          publishTime: article.publishTime,
+          collectTime: Date.now()
         });
-        if (res.result.code === 0) {
-          this.articleList[index].isCollected = !isCollected;
-          this.swipeShowIndex = null;
-          common_vendor.index.vibrateShort();
-          common_vendor.index.showToast({
-            title: isCollected ? "已取消收藏" : "收藏成功",
-            icon: "success"
-          });
-        } else {
-          common_vendor.index.showToast({
-            title: res.result.message || "操作失败",
-            icon: "none"
-          });
-        }
-      } catch (error) {
-        console.error("收藏操作失败:", error);
         common_vendor.index.showToast({
-          title: "操作失败，请重试",
-          icon: "none"
+          title: "收藏成功",
+          icon: "success"
         });
+        common_vendor.index.vibrateShort();
       }
+      common_vendor.index.setStorageSync("collections", collections);
+      this.articleList[index].isCollected = existingIndex < 0;
+      this.swipeShowIndex = null;
     },
     // 触摸事件处理
-    onTouchStart(e, index) {
+    onTouchStart(e) {
       this.touchStartX = e.changedTouches[0].clientX;
-      this.currentTouchIndex = index;
+    },
+    onTouchMove(e) {
     },
     onTouchEnd(e) {
       this.touchEndX = e.changedTouches[0].clientX;
@@ -329,15 +285,12 @@ const _sfc_main = {
     handleSwipe() {
       const diff = this.touchStartX - this.touchEndX;
       if (diff > this.touchThreshold) {
-        if (this.currentTouchIndex >= 0 && this.currentTouchIndex < this.articleList.length) {
-          if (this.swipeShowIndex !== this.currentTouchIndex) {
-            this.swipeShowIndex = this.currentTouchIndex;
-          }
-        }
+        this.swipeShowIndex = this.articleList.findIndex((_, i) => {
+          return true;
+        });
       } else if (diff < -this.touchThreshold) {
         this.swipeShowIndex = null;
       }
-      this.currentTouchIndex = -1;
     }
   },
   // 页面分享
@@ -409,10 +362,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
           article
         }),
         i: $data.swipeShowIndex === index ? 1 : "",
-        j: common_vendor.o(($event) => $options.onTouchStart($event, index), article._id),
+        j: common_vendor.o((...args) => $options.onTouchStart && $options.onTouchStart(...args), article._id),
         k: common_vendor.o((...args) => $options.onTouchEnd && $options.onTouchEnd(...args), article._id),
-        l: article._id,
-        m: common_vendor.o(($event) => $options.goToDetail(article), article._id)
+        l: common_vendor.o((...args) => $options.onTouchMove && $options.onTouchMove(...args), article._id),
+        m: article._id,
+        n: common_vendor.o(($event) => $options.goToDetail(article), article._id)
       };
     }),
     k: $data.loading

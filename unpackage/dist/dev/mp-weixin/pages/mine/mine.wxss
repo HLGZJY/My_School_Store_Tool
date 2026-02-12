@@ -29,6 +29,9 @@
 .menu-item.data-v-7c2ebfa5:active {
   background-color: #F7F9FA;
 }
+.menu-item.danger .text.data-v-7c2ebfa5 {
+  color: #EF4444;
+}
 .left.data-v-7c2ebfa5, .right.data-v-7c2ebfa5 {
   display: flex;
   align-items: center;

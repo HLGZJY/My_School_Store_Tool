@@ -39,11 +39,12 @@ const _sfc_main = {
           }
         });
         if (res.result.code === 0) {
-          const { userId, token, hasRole } = res.result.data;
+          const { userId, openid, token, hasRole } = res.result.data;
           this.$store.commit("user/setUserId", userId);
           this.$store.commit("user/setToken", token);
           this.$store.commit("user/setUserInfo", res.result.data.userInfo);
           common_vendor.index.setStorageSync("userId", userId);
+          common_vendor.index.setStorageSync("openid", openid);
           common_vendor.index.setStorageSync("token", token);
           common_vendor.index.hideLoading();
           if (!hasRole) {
