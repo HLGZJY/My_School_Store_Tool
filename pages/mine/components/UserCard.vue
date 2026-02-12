@@ -1,6 +1,6 @@
 <template>
     <view class="user-card">
-        <image class="avatar" :src="avatar" mode="aspectFill" @click="$emit('click')"></image>
+        <image class="avatar" :src="avatar || '/static/logo.png'" mode="aspectFill" @click="$emit('click')"></image>
         <view class="info">
             <text class="nickname">{{ nickname || '未登录' }}</text>
             <view v-if="role" class="role-badge">
@@ -9,9 +9,12 @@
             <view v-if="roleDetailText" class="role-detail">
                 <text>{{ roleDetailText }}</text>
             </view>
+            <view v-if="interests.length > 0" class="interests">
+                <view v-for="tag in interests" :key="tag" class="interest-tag">{{ tag }}</view>
+            </view>
         </view>
-        <view class="switch-btn" @click="$emit('switchRole')">
-            <text>编辑资料</text>
+        <view v-if="role" class="switch-btn" @click="$emit('switchRole')">
+            <text>修改资料</text>
         </view>
     </view>
 </template>
@@ -20,7 +23,7 @@
 export default {
     name: 'UserCard',
     props: {
-        avatar: { type: String, default: '/static/logo.png' },
+        avatar: { type: String, default: '' },
         nickname: { type: String, default: '' },
         role: { type: String, default: '' },
         roleDetail: { type: Object, default: () => ({}) }
@@ -50,6 +53,12 @@ export default {
             }
 
             return '';
+        },
+        interests() {
+            if (this.role === 'student' && this.roleDetail.interests) {
+                return this.roleDetail.interests;
+            }
+            return [];
         }
     }
 };
@@ -95,6 +104,21 @@ export default {
 .role-detail {
     font-size: 13px;
     color: #718096;
+    margin-bottom: 8px;
+}
+
+.interests {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    .interest-tag {
+        padding: 2px 8px;
+        background-color: #F7F9FA;
+        border-radius: 10px;
+        font-size: 11px;
+        color: #718096;
+    }
 }
 
 .switch-btn {

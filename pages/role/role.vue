@@ -1,8 +1,8 @@
 <template>
     <view class="container">
         <view class="header">
-            <text class="title">请选择您的身份</text>
-            <text class="subtitle">我们将根据您的身份推送相关内容</text>
+            <text class="title">{{ isSwitching ? '切换身份' : '请选择您的身份' }}</text>
+            <text class="subtitle">{{ isSwitching ? '您当前是 ' + currentRoleName : '我们将根据您的身份推送相关内容' }}</text>
         </view>
 
         <view class="role-list">
@@ -26,7 +26,10 @@
 
         <view class="footer">
             <button class="confirm-btn" :disabled="!selectedRole" @click="confirmRole">
-                确认选择
+                {{ isSwitching ? '确认切换' : '确认选择' }}
+            </button>
+            <button v-if="isSwitching" class="cancel-btn" @click="goBack">
+                取消
             </button>
         </view>
     </view>
@@ -36,7 +39,9 @@
 export default {
     data() {
         return {
+            currentRole: '',
             selectedRole: '',
+            isSwitching: false,
             roles: [
                 {
                     value: 'student',
@@ -59,31 +64,53 @@ export default {
             ]
         }
     },
+    computed: {
+        currentRoleName() {
+            const map = { student: '在校学生', teacher: '教师', admin: '行政人员' };
+            return map[this.currentRole] || '未设置';
+        }
+    },
+    onLoad(options) {
+        this.currentRole = options.currentRole || '';
+        this.isSwitching = !!options.switch;
+    },
     methods: {
         selectRole(value) {
-            this.selectedRole = value
+            this.selectedRole = value;
         },
-
+        goBack() {
+            uni.navigateBack();
+        },
         async confirmRole() {
-            if (!this.selectedRole) return
+            if (!this.selectedRole) return;
 
-            uni.showLoading({ title: '设置中...' })
+            // 如果是同一个角色，提示并返回
+            if (this.selectedRole === this.currentRole && this.isSwitching) {
+                uni.showToast({
+                    title: '您已是该身份',
+                    icon: 'none'
+                });
+                uni.navigateBack();
+                return;
+            }
+
+            uni.showLoading({ title: '设置中...' });
 
             try {
-                const userId = this.$store.state.user.userId
+                const userId = this.$store.state.user.userId;
 
                 // 跳转到角色详情设置页
                 uni.redirectTo({
                     url: `/pages/role/role-detail?role=${this.selectedRole}`
-                })
+                });
             } catch (error) {
-                console.error('设置角色失败:', error)
+                console.error('设置角色失败:', error);
                 uni.showToast({
                     title: '设置失败，请重试',
                     icon: 'none'
-                })
+                });
             } finally {
-                uni.hideLoading()
+                uni.hideLoading();
             }
         }
     }
@@ -178,10 +205,26 @@ export default {
         border-radius: 8px;
         font-size: 16px;
         font-weight: 600;
+        margin-bottom: 12px;
 
         &:disabled {
             opacity: 0.5;
         }
+
+        &::after {
+            border: none;
+        }
+    }
+
+    .cancel-btn {
+        width: 100%;
+        height: 48px;
+        line-height: 48px;
+        background-color: #FFFFFF;
+        color: #4A5568;
+        border: 1px solid #E8ECF1;
+        border-radius: 8px;
+        font-size: 16px;
 
         &::after {
             border: none;

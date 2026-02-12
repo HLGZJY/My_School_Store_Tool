@@ -224,9 +224,7 @@ export default {
                     })
 
                     setTimeout(() => {
-                        uni.switchTab({
-                            url: '/pages/index/index'
-                        })
+                        uni.navigateBack()
                     }, 1500)
                 } else {
                     throw new Error(res.result.message)
