@@ -217,10 +217,11 @@ export default {
                                 if (res2.confirm) {
                                     uni.showLoading({ title: '注销中...' });
                                     try {
-                                        const userId = uni.getStorageSync('userId');
+                                        const openid = uni.getStorageSync('userId');
+                                        const userId = this.$store.state.user.userId;
                                         const res3 = await uniCloud.callFunction({
                                             name: 'deleteUserAccount',
-                                            data: { userId }
+                                            data: { openid, userId }
                                         });
                                         if (res3.result.code === 0) {
                                             uni.showToast({ title: '账号已注销', icon: 'success' });
