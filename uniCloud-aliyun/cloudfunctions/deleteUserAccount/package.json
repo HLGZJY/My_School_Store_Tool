@@ -1,0 +1,12 @@
+{
+    "name": "deleteUserAccount",
+    "version": "1.0.0",
+    "description": "注销用户账号，删除所有相关数据",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {}
+}
