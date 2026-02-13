@@ -1,0 +1,10 @@
+{
+    "name": "addAdmin",
+    "version": "1.0.0",
+    "description": "临时添加管理员接口（测试用）",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "dependencies": {}
+}

@@ -12,7 +12,11 @@
     "pages/subscribe/subscribe",
     "pages/about/about",
     "pages/login/login",
-    "pages/search/search"
+    "pages/search/search",
+    "pages/admin/dashboard",
+    "pages/admin/review",
+    "pages/admin/sources",
+    "pages/admin/users"
   ],
   "window": {
     "navigationBarTextStyle": "black",

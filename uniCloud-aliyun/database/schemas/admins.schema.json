@@ -1,0 +1,58 @@
+{
+	"bsonType": "object",
+	"description": "管理员表",
+	"required": ["openid"],
+	"permission": {
+		"read": "doc.openid == auth.openid || auth.role == 'admin'",
+		"create": false,
+		"update": "doc.openid == auth.openid || auth.role == 'admin'",
+		"delete": false,
+		"count": true
+	},
+	"properties": {
+		"_id": {
+			"bsonType": "string",
+			"description": "管理员ID（格式：admin_openid）"
+		},
+		"openid": {
+			"bsonType": "string",
+			"description": "微信OpenID（唯一索引）"
+		},
+		"nickname": {
+			"bsonType": "string",
+			"description": "管理员昵称"
+		},
+		"avatar": {
+			"bsonType": "string",
+			"description": "头像URL"
+		},
+		"permissions": {
+			"bsonType": "array",
+			"description": "权限列表",
+			"enum": ["sync", "approve", "users", "sources", "settings", "all"],
+			"defaultValue": ["sync", "approve"]
+		},
+		"status": {
+			"bsonType": "string",
+			"description": "状态: active/inactive",
+			"defaultValue": "active"
+		},
+		"lastLoginTime": {
+			"bsonType": "number",
+			"description": "最后登录时间"
+		},
+		"createTime": {
+			"bsonType": "number",
+			"description": "创建时间"
+		},
+		"updateTime": {
+			"bsonType": "number",
+			"description": "更新时间"
+		}
+	},
+	"index": [{
+		"indexName": "openid_unique",
+		"indexFields": [{ "name": "openid", "order": "asc" }],
+		"unique": true
+	}]
+}

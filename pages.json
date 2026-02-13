@@ -107,6 +107,38 @@
                 "navigationBarBackgroundColor": "#FFFFFF",
                 "navigationBarTextStyle": "black"
             }
+        },
+        {
+            "path": "pages/admin/dashboard",
+            "style": {
+                "navigationBarTitleText": "管理后台",
+                "navigationBarBackgroundColor": "#07C160",
+                "navigationBarTextStyle": "white"
+            }
+        },
+        {
+            "path": "pages/admin/review",
+            "style": {
+                "navigationBarTitleText": "文章审核",
+                "navigationBarBackgroundColor": "#FFFFFF",
+                "navigationBarTextStyle": "black"
+            }
+        },
+        {
+            "path": "pages/admin/sources",
+            "style": {
+                "navigationBarTitleText": "数据源管理",
+                "navigationBarBackgroundColor": "#FFFFFF",
+                "navigationBarTextStyle": "black"
+            }
+        },
+        {
+            "path": "pages/admin/users",
+            "style": {
+                "navigationBarTitleText": "用户管理",
+                "navigationBarBackgroundColor": "#FFFFFF",
+                "navigationBarTextStyle": "black"
+            }
         }
     ],
     "tabBar": {

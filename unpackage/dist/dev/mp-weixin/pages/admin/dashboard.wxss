@@ -1,0 +1,180 @@
+/**
+ * 全局样式变量
+ */
+/* 主题颜色 */
+/* 原有 uni-app 变量 */
+/* 字体大小 */
+/* 边框圆角 */
+/* 间距 */
+.container.data-v-16cc67e3 {
+  min-height: 100vh;
+  background-color: #F7F9FA;
+  padding: 16px;
+}
+.header.data-v-16cc67e3 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #07C160 0%, #06AD56 100%);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+.header .welcome.data-v-16cc67e3 {
+  display: flex;
+  flex-direction: column;
+}
+.header .welcome .title.data-v-16cc67e3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+.header .welcome .subtitle.data-v-16cc67e3 {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 4px;
+}
+.header .logout-btn.data-v-16cc67e3 {
+  padding: 8px 16px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+}
+.header .logout-btn text.data-v-16cc67e3 {
+  font-size: 14px;
+  color: #FFFFFF;
+}
+.stats-grid.data-v-16cc67e3 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.stats-grid .stat-card.data-v-16cc67e3 {
+  background-color: #FFFFFF;
+  border-radius: 12px;
+  padding: 16px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.stats-grid .stat-card .stat-num.data-v-16cc67e3 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #0A2540;
+}
+.stats-grid .stat-card .stat-label.data-v-16cc67e3 {
+  font-size: 12px;
+  color: #A0AEC0;
+  margin-top: 4px;
+}
+.menu-section.data-v-16cc67e3 {
+  margin-bottom: 20px;
+}
+.menu-section .section-title.data-v-16cc67e3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0A2540;
+  margin-bottom: 12px;
+  display: block;
+}
+.menu-section .menu-grid.data-v-16cc67e3 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.menu-section .menu-grid .menu-item.data-v-16cc67e3 {
+  background-color: #FFFFFF;
+  border-radius: 12px;
+  padding: 16px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+.menu-section .menu-grid .menu-item .menu-icon.data-v-16cc67e3 {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+.menu-section .menu-grid .menu-item .menu-icon.sync.data-v-16cc67e3 {
+  background-color: #E8F5E9;
+}
+.menu-section .menu-grid .menu-item .menu-icon.review.data-v-16cc67e3 {
+  background-color: #FFF3E0;
+}
+.menu-section .menu-grid .menu-item .menu-icon.source.data-v-16cc67e3 {
+  background-color: #E3F2FD;
+}
+.menu-section .menu-grid .menu-item .menu-icon.users.data-v-16cc67e3 {
+  background-color: #F3E5F5;
+}
+.menu-section .menu-grid .menu-item .menu-text.data-v-16cc67e3 {
+  font-size: 12px;
+  color: #0A2540;
+}
+.menu-section .menu-grid .menu-item .badge.data-v-16cc67e3 {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: #FF3B30;
+  color: #FFFFFF;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+.log-section .section-title.data-v-16cc67e3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0A2540;
+  margin-bottom: 12px;
+  display: block;
+}
+.log-section .log-list.data-v-16cc67e3 {
+  background-color: #FFFFFF;
+  border-radius: 12px;
+  padding: 12px;
+}
+.log-section .log-list .log-item.data-v-16cc67e3 {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #F0F0F0;
+}
+.log-section .log-list .log-item.data-v-16cc67e3:last-child {
+  border-bottom: none;
+}
+.log-section .log-list .log-item .log-time.data-v-16cc67e3 {
+  font-size: 12px;
+  color: #A0AEC0;
+  width: 70px;
+}
+.log-section .log-list .log-item .log-content.data-v-16cc67e3 {
+  flex: 1;
+  font-size: 14px;
+  color: #0A2540;
+}
+.log-section .log-list .log-item .log-status.data-v-16cc67e3 {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.log-section .log-list .log-item .log-status.success.data-v-16cc67e3 {
+  background-color: #E8F5E9;
+  color: #07C160;
+}
+.log-section .log-list .log-item .log-status.error.data-v-16cc67e3 {
+  background-color: #FFEBEE;
+  color: #FF3B30;
+}
+.log-section .log-list .empty-log.data-v-16cc67e3 {
+  text-align: center;
+  padding: 30px;
+  color: #A0AEC0;
+  font-size: 14px;
+}

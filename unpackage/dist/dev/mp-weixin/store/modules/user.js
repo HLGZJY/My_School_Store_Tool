@@ -6,7 +6,9 @@ const user = {
     userId: null,
     // 现在等于 openid
     token: null,
-    userInfo: null
+    userInfo: null,
+    entryType: null
+    // 'user' 或 'admin'
   },
   mutations: {
     setUserId(state, userId) {
@@ -23,10 +25,14 @@ const user = {
         state.userInfo.role = role;
       }
     },
+    setEntryType(state, entryType) {
+      state.entryType = entryType;
+    },
     clear(state) {
       state.userId = null;
       state.token = null;
       state.userInfo = null;
+      state.entryType = null;
     }
   },
   actions: {

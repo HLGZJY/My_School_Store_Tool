@@ -1,0 +1,6 @@
+{
+    "name": "manageSources",
+    "version": "1.0.0",
+    "description": "数据源管理云函数",
+    "main": "index.js"
+}

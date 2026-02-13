@@ -54,20 +54,45 @@ export default {
                     }
                 })
 
+                // 调试：显示openid
+                console.log('登录结果:', res.result)
+
                 uni.hideLoading()
 
                 if (res.result.code === 0) {
-                    const { userId, openid, token, hasRole, isNewUser } = res.result.data
+                    const data = res.result.data
+
+                    // 需要选择入口（同时是用户和管理员）
+                    if (data.needSelect) {
+                        this.showEntrySelector(data)
+                        return
+                    }
+
+                    const { userId, openid, token, entryType } = data
+                    const hasRole = data.userInfo?.role ? true : false
 
                     // 保存用户信息
                     this.$store.commit('user/setUserId', userId)
                     this.$store.commit('user/setToken', token)
-                    this.$store.commit('user/setUserInfo', res.result.data.userInfo)
+                    this.$store.commit('user/setUserInfo', data.userInfo || data.adminInfo)
+                    this.$store.commit('user/setEntryType', entryType)
                     uni.setStorageSync('openid', openid)
                     uni.setStorageSync('token', token)
+                    uni.setStorageSync('entryType', entryType)
 
-                    // 根据用户状态跳转
-                    if (!hasRole) {
+                    // 根据入口类型跳转
+                    if (entryType === 'admin') {
+                        // 管理员进入管理端
+                        uni.showToast({
+                            title: '管理员登录成功',
+                            icon: 'success'
+                        })
+                        setTimeout(() => {
+                            uni.reLaunch({
+                                url: '/pages/admin/dashboard'
+                            })
+                        }, 1000)
+                    } else if (!hasRole) {
                         // 新用户或未设置角色，跳转到角色选择
                         uni.redirectTo({
                             url: '/pages/role/role'
@@ -92,6 +117,58 @@ export default {
                 console.error('自动登录失败:', error)
                 uni.hideLoading()
             }
+        },
+
+        // 显示入口选择器
+        showEntrySelector(data) {
+            uni.showModal({
+                title: '请选择入口',
+                content: '您同时拥有用户和管理员身份，请选择要进入的端',
+                confirmText: '管理端',
+                cancelText: '客户端',
+                success: async (res) => {
+                    const entryType = res.confirm ? 'admin' : 'user'
+
+                    // 保存选择结果
+                    uni.setStorageSync('openid', data.userInfo?.openid || data.adminInfo?.openid)
+                    uni.setStorageSync('token', data.token)
+                    uni.setStorageSync('entryType', entryType)
+                    this.$store.commit('user/setEntryType', entryType)
+
+                    if (entryType === 'admin') {
+                        this.$store.commit('user/setUserId', data.adminInfo?.adminId)
+                        this.$store.commit('user/setUserInfo', data.adminInfo)
+                        uni.showToast({
+                            title: '进入管理端',
+                            icon: 'success'
+                        })
+                        setTimeout(() => {
+                            uni.reLaunch({
+                                url: '/pages/admin/dashboard'
+                            })
+                        }, 1000)
+                    } else {
+                        this.$store.commit('user/setUserId', data.userInfo?.userId)
+                        this.$store.commit('user/setUserInfo', data.userInfo)
+                        const hasRole = data.userInfo?.role ? true : false
+                        if (!hasRole) {
+                            uni.redirectTo({
+                                url: '/pages/role/role'
+                            })
+                        } else {
+                            uni.showToast({
+                                title: '进入客户端',
+                                icon: 'success'
+                            })
+                            setTimeout(() => {
+                                uni.switchTab({
+                                    url: '/pages/index/index'
+                                })
+                            }, 1000)
+                        }
+                    }
+                }
+            })
         },
 
         onGetUserInfo(e) {
@@ -125,21 +202,43 @@ export default {
                 })
 
                 if (res.result.code === 0) {
-                    const { userId, openid, token, hasRole } = res.result.data
+                    const data = res.result.data
+
+                    // 需要选择入口（同时是用户和管理员）
+                    if (data.needSelect) {
+                        uni.hideLoading()
+                        this.showEntrySelector(data)
+                        return
+                    }
+
+                    const { userId, openid, token, entryType } = data
+                    const hasRole = data.userInfo?.role ? true : false
 
                     // 使用store保存用户信息
                     this.$store.commit('user/setUserId', userId)
                     this.$store.commit('user/setToken', token)
-                    this.$store.commit('user/setUserInfo', res.result.data.userInfo)
+                    this.$store.commit('user/setUserInfo', data.userInfo || data.adminInfo)
+                    this.$store.commit('user/setEntryType', entryType)
 
                     // 存储用户信息
                     uni.setStorageSync('openid', openid)
                     uni.setStorageSync('token', token)
+                    uni.setStorageSync('entryType', entryType)
 
                     uni.hideLoading()
 
-                    // 检查是否需要选择角色
-                    if (!hasRole) {
+                    // 根据入口类型跳转
+                    if (entryType === 'admin') {
+                        uni.showToast({
+                            title: '管理员登录成功',
+                            icon: 'success'
+                        })
+                        setTimeout(() => {
+                            uni.reLaunch({
+                                url: '/pages/admin/dashboard'
+                            })
+                        }, 1500)
+                    } else if (!hasRole) {
                         uni.redirectTo({
                             url: '/pages/role/role'
                         })
