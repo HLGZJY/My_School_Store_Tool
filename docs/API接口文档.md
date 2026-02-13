@@ -1,5 +1,11 @@
 # 校园信息聚合小程序 - API接口文档
 
+> **文档版本**：v1.1
+> **更新日期**：2026-02-13
+> **变更说明**：用户标识体系重构，openid 作为统一用户标识
+
+---
+
 ## 接口概览
 
 本文档描述小程序前端调用的云函数接口，以及云函数之间的内部接口。
@@ -31,15 +37,26 @@
     code: 0,                    // 0表示成功
     message: "登录成功",
     data: {
-        userId: "用户ID",
+        userId: "用户ID（v1.1+ 等于 openid）",
         openid: "微信OpenID",
         token: "访问令牌",
         isNewUser: false,       // 是否新用户
-        role: "用户角色",        // null表示未设置角色
-        hasRole: false           // 是否已选择角色
+        hasRole: false,          // 是否已选择角色
+        userInfo: {              // 用户信息
+            _id: "用户ID（等于 openid）",
+            nickname: "昵称",
+            avatar: "头像URL",
+            role: "student/teacher/admin/null"
+        }
     }
 }
 ```
+
+**版本差异（v1.1）**：
+| 字段 | v1.0 | v1.1 |
+|-----|------|------|
+| userId | 自动生成的 ObjectId | openid（与 _id 相同） |
+| 返回结构 | 直接返回 role | 返回完整的 userInfo 对象 |
 
 **错误码**：
 | 错误码 | 说明 |
@@ -59,7 +76,8 @@
 **请求参数**：
 ```javascript
 {
-    userId: "用户ID"
+    // v1.1+ 使用 openid 作为用户标识
+    openid: "微信OpenID"
 }
 ```
 
@@ -69,7 +87,8 @@
     code: 0,
     message: "成功",
     data: {
-        _id: "用户ID",
+        _id: "用户ID（等于 openid）",
+        openid: "微信OpenID",
         nickname: "昵称",
         avatar: "头像URL",
         role: "student",
@@ -82,12 +101,21 @@
         },
         stats: {
             readCount: 128,
-            collectCount: 45
+            collectCount: 45,
+            searchCount: 0
         },
-        subscribeSources: ["source_id_1", "source_id_2"]
+        subscribeSources: ["source_id_1", "source_id_2"],
+        createTime: 1707456000000,
+        lastLoginTime: 1707542400000
     }
 }
 ```
+
+**版本差异（v1.1）**：
+| 字段 | v1.0 | v1.1 |
+|-----|------|------|
+| 请求参数 | userId | openid |
+| 返回 _id | ObjectId | openid |
 
 ---
 
@@ -100,12 +128,14 @@
 **请求参数**：
 ```javascript
 {
-    userId: "用户ID",
+    // v1.1+ 使用 openid 作为用户标识
+    openid: "微信OpenID",
     role: "student",
     roleDetail: {
-        major: "计算机科学与技术",
-        grade: "2022",
-        interests: ["编程", "人工智能"]
+        // v1.1 简化版：
+        // 学生：{ academy: "学院", grade: "年级", interests: ["标签"] }
+        // 教师：{ academy: "院系", title: "职称" }
+        // 行政：{ department: "部门" }
     }
 }
 ```
@@ -117,6 +147,12 @@
     message: "角色设置成功"
 }
 ```
+
+**版本差异（v1.1）**：
+| 字段 | v1.0 | v1.1 |
+|-----|------|------|
+| 请求参数 | userId | openid |
+| roleDetail | 包含专业、职称、研究方向等 | 简化为学院/部门选择 |
 
 ---
 
@@ -187,13 +223,24 @@
 **请求参数**：
 ```javascript
 {
-    userId: "用户ID（可选，未登录为null）",
+    openid: "用户OpenID（可选，未登录为null）",
     category: "notice",           // 分类，可选
-    page: 1,                       // 页码
-    pageSize: 15,                  // 每页数量
-    refresh: false                 // 是否强制刷新
+    sourceId: "来源ID",           // 来源筛选（v1.1新增）
+    tag: "标签",                  // 标签筛选（v1.1新增）
+    startDate: 0,                // 开始时间戳（v1.1新增）
+    endDate: 0,                  // 结束时间戳（v1.1新增）
+    page: 1,
+    pageSize: 10,                 // 默认10条（v1.1调整）
+    refresh: false
 }
 ```
+
+**版本差异（v1.1）**：
+| 参数 | v1.0 | v1.1 |
+|-----|------|------|
+| userId | userId | openid |
+| pageSize | 15 | 10 |
+| 筛选条件 | 仅分类 | 来源/标签/时间范围 |
 
 **返回结果**：
 ```javascript
@@ -379,7 +426,8 @@
 **请求参数**：
 ```javascript
 {
-    userId: "用户ID",
+    // v1.1+ 使用 openid
+    openid: "微信OpenID",
     articleId: "文章ID",
     action: "collect/uncollect"  // 收藏/取消收藏
 }
@@ -397,6 +445,8 @@
 }
 ```
 
+**版本差异（v1.1）**：请求参数 userId → openid
+
 ---
 
 ### 3.2 获取收藏列表
@@ -408,7 +458,8 @@
 **请求参数**：
 ```javascript
 {
-    userId: "用户ID",
+    // v1.1+ 使用 openid
+    openid: "微信OpenID",
     page: 1,
     pageSize: 20,
     category: "notice",      // 可选分类筛选
@@ -430,10 +481,9 @@
                     title: "文章标题",
                     summary: "摘要",
                     category: "notice",
-                    coverImage: "封面图URL",
                     sourceName: "教务处"
                 },
-                createTime: 1707542400000
+                collectTime: 1707542400000
             }
         ],
         hasMore: true,
@@ -453,7 +503,8 @@
 **请求参数**：
 ```javascript
 {
-    userId: "用户ID",
+    // v1.1+ 使用 openid
+    openid: "微信OpenID",
     articleIds: [
         "article_id_1",
         "article_id_2"
@@ -472,6 +523,8 @@
 }
 ```
 
+**版本差异（v1.1）**：请求参数 userId → openid
+
 ---
 
 ## 四、阅读历史接口
@@ -485,7 +538,8 @@
 **请求参数**：
 ```javascript
 {
-    userId: "用户ID",
+    // v1.1+ 使用 openid
+    openid: "微信OpenID",
     page: 1,
     pageSize: 20
 }
@@ -507,7 +561,7 @@
                     sourceName: "教务处"
                 },
                 readTime: 1707542400000,
-                readDuration: 45
+                duration: 45
             }
         ],
         hasMore: true,
@@ -515,6 +569,8 @@
     }
 }
 ```
+
+**版本差异（v1.1）**：请求参数 userId → openid；readDuration → duration
 
 ---
 
@@ -527,7 +583,8 @@
 **请求参数**：
 ```javascript
 {
-    userId: "用户ID"
+    // v1.1+ 使用 openid
+    openid: "微信OpenID"
 }
 ```
 
@@ -544,6 +601,34 @@
 
 ---
 
+### 4.3 记录阅读
+
+**云函数**：`recordRead`
+
+**请求方式**：云函数调用
+
+**请求参数**：
+```javascript
+{
+    // v1.1+ 使用 openid
+    openid: "微信OpenID",
+    articleId: "文章ID",
+    duration: 30    // 阅读时长（秒）
+}
+```
+
+**返回结果**：
+```javascript
+{
+    code: 0,
+    message: "阅读记录成功"
+}
+```
+
+**功能说明**：进入详情页时自动调用，记录阅读历史并更新用户阅读统计。
+
+---
+
 ## 五、消息相关接口
 
 ### 5.1 获取消息列表
@@ -555,8 +640,9 @@
 **请求参数**：
 ```javascript
 {
-    userId: "用户ID",
-    type: "all",    // all/unread/all-read
+    // v1.1+ 使用 openid
+    openid: "微信OpenID",
+    type: "all",    // all/unread/system
     page: 1,
     pageSize: 20
 }
@@ -571,12 +657,11 @@
         messages: [
             {
                 _id: "消息ID",
-                type: "update",
+                type: "system/activity/update",
                 title: "订阅源更新",
                 content: "订阅源「教务处」更新了5篇内容",
                 link: "pages/discover/discover",
                 isRead: false,
-                readTime: null,
                 createTime: 1707542400000
             }
         ],
@@ -586,6 +671,8 @@
     }
 }
 ```
+
+**版本差异（v1.1）**：请求参数 userId → openid
 
 ---
 
@@ -598,7 +685,8 @@
 **请求参数**：
 ```javascript
 {
-    userId: "用户ID",
+    // v1.1+ 使用 openid
+    openid: "微信OpenID",
     messageId: "消息ID",   // 单条标记
     // 或
     all: true               // 全部标记
@@ -616,6 +704,278 @@
 ---
 
 ## 六、发现页接口
+
+### 6.1 获取热门排行
+
+**云函数**：`getHotArticles`（v1.1新增）
+
+**请求方式**：云函数调用
+
+**请求参数**：
+```javascript
+{
+    limit: 20    // 返回数量
+}
+```
+
+**返回结果**：
+```javascript
+{
+    code: 0,
+    message: "成功",
+    data: {
+        ranking: [
+            {
+                _id: "文章ID",
+                title: "文章标题",
+                summary: "摘要",
+                category: "notice",
+                stats: {
+                    viewCount: 1234,
+                    collectCount: 56,
+                    shareCount: 12
+                },
+                publishTime: 1707456000000
+            }
+        ]
+    }
+}
+```
+
+**说明**：按7天浏览量降序排列。
+
+---
+
+### 6.2 获取标签云
+
+**云函数**：`getTagCloud`（v1.1新增）
+
+**请求方式**：云函数调用
+
+**请求参数**：
+```javascript
+{
+    limit: 50
+}
+```
+
+**返回结果**：
+```javascript
+{
+    code: 0,
+    message: "成功",
+    data: {
+        tags: [
+            {
+                name: "考试",
+                count: 156,
+                weight: 1.0    // 权重（用于字号）
+            },
+            {
+                name: "讲座",
+                count: 98,
+                weight: 0.6
+            }
+        ]
+    }
+}
+```
+
+---
+
+### 6.3 获取时间轴
+
+**云函数**：`getTimeline`（v1.1新增）
+
+**请求方式**：云函数调用
+
+**请求参数**：
+```javascript
+{
+    startDate: 1707000000000,    // 可选起始日期
+    endDate: 1707696000000       // 可选结束日期
+}
+```
+
+**返回结果**：
+```javascript
+{
+    code: 0,
+    message: "成功",
+    data: {
+        timeline: [
+            {
+                date: "2024-02-09",
+                timestamp: 1707456000000,
+                count: 12,
+                expanded: false,
+                articles: []
+            }
+        ]
+    }
+}
+```
+
+---
+
+### 6.4 获取订阅源列表
+
+**云函数**：`getSubscribeSources`（v1.1新增）
+
+**请求方式**：云函数调用
+
+**请求参数**：
+```javascript
+{
+    openid: "微信OpenID"
+}
+```
+
+**返回结果**：
+```javascript
+{
+    code: 0,
+    message: "成功",
+    data: {
+        subscribed: [
+            {
+                _id: "source_id",
+                name: "教务处",
+                description: "教务处官网通知",
+                type: "rss",
+                stats: {
+                    totalArticles: 156
+                }
+            }
+        ],
+        recommended: [
+            {
+                _id: "source_id_2",
+                name: "图书馆",
+                description: "图书馆官方信息",
+                type: "rss"
+            }
+        ]
+    }
+}
+```
+
+---
+
+## 七、搜索相关接口
+
+### 7.1 搜索文章
+
+**云函数**：`searchArticles`
+
+**请求方式**：云函数调用
+
+**请求参数**：
+```javascript
+{
+    // v1.1+ 使用 openid
+    openid: "微信OpenID（可选）",
+    keyword: "考试",
+    page: 1,
+    pageSize: 20,
+    filters: {
+        category: "notice",       // 可选分类筛选
+        source: "教务处",         // 可选来源筛选
+        tag: "考试",              // 可选标签筛选（v1.1新增）
+        timeRange: "week"         // 可选时间范围
+    }
+}
+```
+
+**返回结果**：
+```javascript
+{
+    code: 0,
+    message: "成功",
+    data: {
+        articles: [
+            {
+                _id: "文章ID",
+                title: "关于期末<span class='highlight'>考试</span>的通知",
+                summary: "摘要...",
+                category: "notice",
+                sourceName: "教务处",
+                publishTime: 1707456000000
+            }
+        ],
+        hasMore: false,
+        total: 5,
+        searchTime: 123
+    },
+    hotKeywords: [
+        "期末考试",
+        "讲座",
+        "图书馆"
+    ]
+}
+```
+
+**说明**：
+- v1.1 移除7天时间限制，显示所有匹配文章
+- 关键词高亮使用 `<span class='highlight'>` 标签
+
+---
+
+### 7.2 获取热门搜索
+
+**云函数**：`getHotKeywords`
+
+**请求方式**：云函数调用
+
+**请求参数**：
+```javascript
+{
+    limit: 10    // 返回数量
+}
+```
+
+**返回结果**：
+```javascript
+{
+    code: 0,
+    message: "成功",
+    data: {
+        keywords: [
+            { keyword: "期末考试", count: 156 },
+            { keyword: "讲座", count: 98 }
+        ]
+    }
+}
+```
+
+---
+
+### 7.3 上报搜索记录
+
+**云函数**：`reportSearch`
+
+**请求方式**：云函数调用
+
+**请求参数**：
+```javascript
+{
+    openid: "微信OpenID（可选）",
+    keyword: "考试",
+    resultCount: 25
+}
+```
+
+**返回结果**：
+```javascript
+{
+    code: 0,
+    message: "上报成功"
+}
+```
+
+---
+
+## 八、附录：用户标识版本说明
 
 ### 6.1 获取热门排行
 
@@ -1112,11 +1472,47 @@ exports.main = async (event, context) => {
 };
 ```
 
+## 八、附录：用户标识版本说明
+
+### 版本对比
+
+| 对比项 | v1.0 | v1.1 |
+|-------|------|------|
+| users 表 _id | 自动生成的 ObjectId | openid |
+| 用户标识字段 | userId（ObjectId） | openid |
+| 前端存储 | userId + token | openid + token |
+| 自动登录 | 不支持 | 支持 |
+| 跨环境数据 | 失效 | 保持 |
+
+### 版本迁移
+
+| 时间 | 版本 | 主要变更 |
+|-----|------|---------|
+| 2024-02-09 | v1.0 | 初始版本，使用 ObjectId 作为用户ID |
+| 2026-02-12 | v1.1 | 用户标识体系重构，openid 统一标识 |
+
+### 登录流程变化
+
+```
+v1.0:
+  登录 → 获取 openid → 创建用户(_id=ObjectId) → 返回 userId
+  ↓
+  前端存储 userId
+
+v1.1:
+  登录 → 获取 openid → 创建/查询用户(_id=openid) → 返回 userId=openid
+  ↓
+  前端存储 openid
+  ↓
+  退出登录后自动检测 → 有记录直接恢复会话
+```
+
 ---
 
-## 附录：接口版本控制
+## 附录B：接口变更记录
 
-当前版本：**v1.0.0**
-
-版本变更记录：
-- v1.0.0 (2024-02-09): 初始版本
+| 版本 | 日期 | 变更内容 |
+|-----|------|---------|
+| v1.0 | 2024-02-09 | 初始版本 |
+| v1.1 | 2026-02-12 | 用户标识改为 openid；新增筛选功能 |
+| v1.1 | 2026-02-13 | 简化身份信息收集；新增发现页接口 |
