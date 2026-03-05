@@ -17,9 +17,15 @@ module.exports = {
 
         try {
             // 构建查询条件
-            const whereCondition = {
-                status: 'published'
-            };
+            const whereCondition = {};
+
+            // 支持前端传入的 status 筛选（管理员审核页面需要）
+            if (event.where && event.where.status) {
+                whereCondition.status = event.where.status;
+            } else {
+                // 默认只查询已发布的文章
+                whereCondition.status = 'published';
+            }
 
             // 分类筛选
             if (category) {
@@ -76,7 +82,7 @@ module.exports = {
                 code: 0,
                 message: 'success',
                 data: {
-                    articles: res.data,
+                    list: res.data,
                     recommendations: recommendRes.data.map(item => ({
                         _id: item._id,
                         title: item.title,

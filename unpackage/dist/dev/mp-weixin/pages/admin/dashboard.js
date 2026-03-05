@@ -67,7 +67,12 @@ const _sfc_main = {
             common_vendor.index.showLoading({ title: "采集中..." });
             try {
               const res2 = await common_vendor.Vs.callFunction({
-                name: "syncSource"
+                name: "fetchUrl",
+                data: {
+                  action: "test",
+                  openid: common_vendor.index.getStorageSync("openid")
+                },
+                timeout: 6e4
               });
               common_vendor.index.hideLoading();
               if (res2.result.code === 0) {
@@ -109,6 +114,24 @@ const _sfc_main = {
     goToUsers() {
       common_vendor.index.navigateTo({
         url: "/pages/admin/users"
+      });
+    },
+    // 跳转微信采集测试
+    goToWcTest() {
+      common_vendor.index.navigateTo({
+        url: "/pages/admin/wc-test"
+      });
+    },
+    // 跳转 URL 抓取测试
+    goToUrlFetch() {
+      common_vendor.index.navigateTo({
+        url: "/pages/admin/url-fetch"
+      });
+    },
+    // 跳转简化抓取测试
+    goToSimpleFetch() {
+      common_vendor.index.navigateTo({
+        url: "/pages/admin/simple-fetch"
       });
     },
     // 退出登录
@@ -176,7 +199,25 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       color: "#5856D6"
     }),
     p: common_vendor.o((...args) => $options.goToUsers && $options.goToUsers(...args)),
-    q: common_vendor.f($data.recentLogs, (item, index, i0) => {
+    q: common_vendor.p({
+      type: "weixin",
+      size: "24",
+      color: "#07C160"
+    }),
+    r: common_vendor.o((...args) => $options.goToWcTest && $options.goToWcTest(...args)),
+    s: common_vendor.p({
+      type: "link",
+      size: "24",
+      color: "#FF9500"
+    }),
+    t: common_vendor.o((...args) => $options.goToUrlFetch && $options.goToUrlFetch(...args)),
+    v: common_vendor.p({
+      type: "search",
+      size: "24",
+      color: "#5856D6"
+    }),
+    w: common_vendor.o((...args) => $options.goToSimpleFetch && $options.goToSimpleFetch(...args)),
+    x: common_vendor.f($data.recentLogs, (item, index, i0) => {
       return {
         a: common_vendor.t($options.formatTime(item.time)),
         b: common_vendor.t(item.message),
@@ -185,7 +226,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         e: index
       };
     }),
-    r: $data.recentLogs.length === 0
+    y: $data.recentLogs.length === 0
   }, $data.recentLogs.length === 0 ? {} : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-16cc67e3"]]);

@@ -136,7 +136,8 @@ export default {
                                 name: 'approveArticle',
                                 data: {
                                     articleId: item._id,
-                                    action: 'approve'
+                                    action: 'approve',
+                                    openid: uni.getStorageSync('openid')
                                 }
                             })
 
@@ -167,7 +168,8 @@ export default {
                                 data: {
                                     articleId: item._id,
                                     action: 'reject',
-                                    note: res.content
+                                    note: res.content,
+                                    openid: uni.getStorageSync('openid')
                                 }
                             })
 

@@ -112,6 +112,15 @@
 .menu-section .menu-grid .menu-item .menu-icon.users.data-v-16cc67e3 {
   background-color: #F3E5F5;
 }
+.menu-section .menu-grid .menu-item .menu-icon.wc.data-v-16cc67e3 {
+  background-color: #E0F2F1;
+}
+.menu-section .menu-grid .menu-item .menu-icon.url-fetch.data-v-16cc67e3 {
+  background-color: #FFF3E0;
+}
+.menu-section .menu-grid .menu-item .menu-icon.simple-fetch.data-v-16cc67e3 {
+  background-color: #E3F2FD;
+}
 .menu-section .menu-grid .menu-item .menu-text.data-v-16cc67e3 {
   font-size: 12px;
   color: #0A2540;

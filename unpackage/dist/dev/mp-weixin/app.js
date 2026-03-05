@@ -17,9 +17,12 @@ if (!Math) {
   "./pages/login/login.js";
   "./pages/search/search.js";
   "./pages/admin/dashboard.js";
+  "./pages/admin/wc-test.js";
   "./pages/admin/review.js";
   "./pages/admin/sources.js";
   "./pages/admin/users.js";
+  "./pages/admin/url-fetch.js";
+  "./pages/admin/simple-fetch.js";
 }
 const _sfc_main = {
   onLaunch() {

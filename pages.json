@@ -117,6 +117,14 @@
             }
         },
         {
+            "path": "pages/admin/wc-test",
+            "style": {
+                "navigationBarTitleText": "微信采集测试",
+                "navigationBarBackgroundColor": "#07C160",
+                "navigationBarTextStyle": "white"
+            }
+        },
+        {
             "path": "pages/admin/review",
             "style": {
                 "navigationBarTitleText": "文章审核",
@@ -138,6 +146,22 @@
                 "navigationBarTitleText": "用户管理",
                 "navigationBarBackgroundColor": "#FFFFFF",
                 "navigationBarTextStyle": "black"
+            }
+        },
+        {
+            "path": "pages/admin/url-fetch",
+            "style": {
+                "navigationBarTitleText": "URL抓取测试",
+                "navigationBarBackgroundColor": "#07C160",
+                "navigationBarTextStyle": "white"
+            }
+        },
+        {
+            "path": "pages/admin/simple-fetch",
+            "style": {
+                "navigationBarTitleText": "简化抓取测试",
+                "navigationBarBackgroundColor": "#07C160",
+                "navigationBarTextStyle": "white"
             }
         }
     ],

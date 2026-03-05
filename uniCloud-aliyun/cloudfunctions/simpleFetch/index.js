@@ -36,23 +36,29 @@ async function httpGet(url) {
             timeout: TIMEOUT,
             maxContentLength: Infinity,
             maxBodyLength: Infinity,
-            headers: { 'User-Agent': 'Mozilla/5.0' }
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
         });
-        return { success: true, content: res.data };
+        return { success: true, content: res.data, status: res.status };
     } catch (e) {
-        return { success: false, error: e.message };
+        const status = e.response?.status || 'network error';
+        const statusText = e.response?.statusText || e.message;
+        return { success: false, error: `HTTP ${status}: ${statusText}`, status };
     }
 }
 
-// 检测URL是否存在
+// 检测URL是否存在（快速HEAD请求）
 async function checkUrlExists(url) {
     try {
-        const res = await axios.head(url, { timeout: 10000 });
+        const res = await axios.head(url, { timeout: 5000, headers: { 'User-Agent': 'Mozilla/5.0' } });
         return res.status === 200;
-    } catch {
-        // HEAD可能不被支持，尝试GET
-        const res = await httpGet(url);
-        return res.success;
+    } catch (e) {
+        // HEAD可能不被支持，尝试GET（快速获取状态码）
+        try {
+            const res = await axios.get(url, { timeout: 5000, headers: { 'User-Agent': 'Mozilla/5.0' }, maxRedirects: 0 });
+            return res.status === 200;
+        } catch (getErr) {
+            return getErr.response?.status === 200;
+        }
     }
 }
 
@@ -126,7 +132,7 @@ async function saveArticle(item, url) {
 // ============ 核心功能 ============
 
 // 提取列表页所有目标链接（支持分页）
-async function extractLinks(listUrl, maxPages = 10) {
+async function extractLinks(listUrl, maxPages = 10, skipCheck = false) {
     console.log('[simpleFetch] 提取链接:', listUrl);
 
     const allLinks = [];
@@ -190,10 +196,37 @@ async function extractLinks(listUrl, maxPages = 10) {
     }
 
     console.log('[simpleFetch] 共提取到链接数量:', allLinks.length);
-    return { success: true, links: allLinks };
+
+    let validLinks = allLinks;
+
+    // 预检验：过滤掉404的链接（可选，默认开启）
+    if (!skipCheck) {
+        console.log('[simpleFetch] 开始URL预检验，过滤404链接...');
+        const tempLinks = [];
+        for (const link of allLinks) {
+            const exists = await checkUrlExists(link);
+            if (exists) {
+                tempLinks.push(link);
+            } else {
+                console.log(`[simpleFetch] 过滤失效链接: ${link}`);
+            }
+        }
+        validLinks = tempLinks;
+        console.log(`[simpleFetch] 预检验完成: ${validLinks.length}/${allLinks.length} 有效链接`);
+    } else {
+        console.log('[simpleFetch] 跳过URL预检验');
+    }
+
+    return { success: true, links: validLinks };
 }
 
-// 提取单页链接
+/**
+ * 提取单页链接
+ * @param {string} content - HTML内容
+ * @param {string} baseOrigin - 域名，如 https://www.scuec.edu.cn
+ * @param {string} basePath - 当前页面路径，如 https://www.scuec.edu.cn/cxcy/scss/
+ * @returns {string[]} 文章链接数组
+ */
 function extractPageLinks(content, baseOrigin, basePath) {
     const links = [];
     const seen = new Set();
@@ -213,8 +246,10 @@ function extractPageLinks(content, baseOrigin, basePath) {
         // 相对路径处理
         let fullUrl = href;
         if (href.startsWith('/')) {
+            // 绝对路径：如 /cxcy/info/1007/2494.htm
             fullUrl = baseOrigin + href;
         } else if (href.startsWith('../')) {
+            // 向上跳转的相对路径
             let base = basePath;
             const parts = href.split('/');
             for (const p of parts) {
@@ -222,9 +257,34 @@ function extractPageLinks(content, baseOrigin, basePath) {
             }
             fullUrl = base + '/' + parts.filter(x => x && x !== '..').join('/');
         } else if (!href.startsWith('http')) {
+            // 普通相对路径：如 info/1028/2385.htm
             fullUrl = basePath + href;
         }
         fullUrl = fullUrl.split('#')[0].split('?')[0];
+
+        // ========== 关键修复：处理院校网站常见的错误拼接 ==========
+        // 问题示例：
+        //   列表页: https://www.scuec.edu.cn/cxcy/scss/ppss.htm
+        //   提取到: info/1028/2385.htm (相对路径)
+        //   错误拼接: https://www.scuec.edu.cn/cxcy/scss/info/1028/2385.htm
+        //   正确URL: https://www.scuec.edu.cn/cxcy/info/1028/2385.htm
+        //
+        // 解决：当 basePath 中间有多余路径（如 /cxcy/scss/）时，
+        // 提取到 info/xxx/xxx.htm 格式的链接，应该去掉中间部分
+        // 只保留 /cxcy/info/xxx/xxx.htm
+        if (fullUrl.includes('/cxcy/')) {
+            // 检查是否匹配 info/数字/数字.htm 格式
+            const infoMatch = fullUrl.match(/\/cxcy\/([^/]+)\/info\/\d+\/\d+\.htm/i);
+            if (infoMatch) {
+                // 去掉中间的错误路径，保留正确格式
+                // 例如: /cxcy/scss/info/1028/2385.htm -> /cxcy/info/1028/2385.htm
+                const wrongPath = '/' + infoMatch[1] + '/info/'; // /scss/info/
+                const correctPath = '/cxcy/info/';
+                if (fullUrl.includes(wrongPath)) {
+                    fullUrl = fullUrl.replace(wrongPath, correctPath);
+                }
+            }
+        }
 
         // 过滤：只保留四位数字格式的文章链接
         if (!articlePattern.test(fullUrl)) {
@@ -242,7 +302,7 @@ function extractPageLinks(content, baseOrigin, basePath) {
 // ============ 主入口 ============
 
 exports.main = async (event, context) => {
-    const { url, mode = 'list', step = 'all', limit = 50, maxPages = 10, links = [], startIndex = 0, openid } = event;
+    const { url, mode = 'list', step = 'all', limit = 50, maxPages = 10, links = [], startIndex = 0, openid, skipCheck = false } = event;
     const startTime = Date.now();
 
     if (!url && links.length === 0) return { code: 400, message: 'URL不能为空' };
@@ -263,7 +323,7 @@ exports.main = async (event, context) => {
 
         // AI解析测试模式：只处理前5篇，返回AI解析结果（不存储）
         if (mode === 'test-ai') {
-            const linksResult = await extractLinks(url, maxPages);
+            const linksResult = await extractLinks(url, maxPages, skipCheck);
             if (!linksResult.success) return { code: 500, message: '获取链接失败: ' + linksResult.error };
 
             const allLinks = linksResult.links || [];
@@ -279,8 +339,10 @@ exports.main = async (event, context) => {
 
                 // 获取HTML内容
                 const httpRes = await httpGet(articleUrl);
+                console.log(`[simpleFetch] 获取结果: ${articleUrl}, success=${httpRes.success}, status=${httpRes.status || 'N/A'}`);
                 if (!httpRes.success) {
-                    results.push({ url: articleUrl, status: 'fetch_failed', error: httpRes.error });
+                    console.log(`[simpleFetch] 获取失败: ${httpRes.error}`);
+                    results.push({ url: articleUrl, status: 'fetch_failed', error: httpRes.error, httpStatus: httpRes.status });
                     continue;
                 }
 
@@ -311,7 +373,7 @@ exports.main = async (event, context) => {
 
             // 步骤1：只获取链接列表
             if (step === 'links' || step === 'all') {
-                const linksResult = await extractLinks(url, maxPages);
+                const linksResult = await extractLinks(url, maxPages, skipCheck);
                 if (!linksResult.success) return { code: 500, message: '获取链接失败: ' + linksResult.error };
 
                 allLinks = linksResult.links || [];
@@ -350,8 +412,9 @@ exports.main = async (event, context) => {
 
                 // 获取详情
                 const httpRes = await httpGet(articleUrl);
+                console.log(`[simpleFetch] 获取: ${articleUrl}, status=${httpRes.status || httpRes.error}`);
                 if (!httpRes.success) {
-                    results.push({ url: articleUrl, status: 'fetch_failed', error: httpRes.error });
+                    results.push({ url: articleUrl, status: 'fetch_failed', error: httpRes.error, httpStatus: httpRes.status });
                     continue;
                 }
 

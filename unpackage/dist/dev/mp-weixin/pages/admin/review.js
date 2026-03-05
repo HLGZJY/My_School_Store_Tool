@@ -65,7 +65,8 @@ const _sfc_main = {
                 name: "approveArticle",
                 data: {
                   articleId: item._id,
-                  action: "approve"
+                  action: "approve",
+                  openid: common_vendor.index.getStorageSync("openid")
                 }
               });
               if (res2.result.code === 0) {
@@ -94,7 +95,8 @@ const _sfc_main = {
                 data: {
                   articleId: item._id,
                   action: "reject",
-                  note: res2.content
+                  note: res2.content,
+                  openid: common_vendor.index.getStorageSync("openid")
                 }
               });
               if (res2.result.code === 0) {

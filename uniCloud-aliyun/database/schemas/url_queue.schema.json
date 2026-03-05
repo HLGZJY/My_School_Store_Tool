@@ -1,0 +1,75 @@
+{
+	"bsonType": "object",
+	"required": ["url", "sourceUrl", "status"],
+	"permission": {
+		"read": true,
+		"create": true,
+		"update": true,
+		"delete": "auth.uid != null"
+	},
+	"properties": {
+		"_id": {
+			"description": "记录ID"
+		},
+		"url": {
+			"bsonType": "string",
+			"description": "文章链接",
+			"label": "文章链接"
+		},
+		"sourceUrl": {
+			"bsonType": "string",
+			"description": "来源列表页URL",
+			"label": "来源URL"
+		},
+		"sourceId": {
+			"bsonType": "string",
+			"description": "数据源ID（关联sources集合）",
+			"label": "数据源ID"
+		},
+		"sourceName": {
+			"bsonType": "string",
+			"description": "数据源名称",
+			"label": "数据源名称"
+		},
+		"status": {
+			"bsonType": "string",
+			"description": "状态：pending-待处理, processing-处理中, processed-已处理, failed-失败",
+			"label": "状态",
+			"enum": ["pending", "processing", "processed", "failed"]
+		},
+		"fetchTime": {
+			"bsonType": "long",
+			"description": "最近一次抓取时间",
+			"label": "抓取时间"
+		},
+		"processTime": {
+			"bsonType": "long",
+			"description": "处理完成时间",
+			"label": "处理时间"
+		},
+		"error": {
+			"bsonType": "string",
+			"description": "错误信息",
+			"label": "错误信息"
+		},
+		"articleId": {
+			"bsonType": "string",
+			"description": "关联的文章ID",
+			"label": "文章ID"
+		},
+		"retryCount": {
+			"bsonType": "int",
+			"description": "重试次数",
+			"label": "重试次数",
+			"defaultValue": 0
+		},
+		"createTime": {
+			"bsonType": "long",
+			"description": "创建时间"
+		},
+		"updateTime": {
+			"bsonType": "long",
+			"description": "更新时间"
+		}
+	}
+}

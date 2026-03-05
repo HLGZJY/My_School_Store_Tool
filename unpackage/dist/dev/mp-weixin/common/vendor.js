@@ -7726,6 +7726,14 @@ const pages = [
     }
   },
   {
+    path: "pages/admin/wc-test",
+    style: {
+      navigationBarTitleText: "微信采集测试",
+      navigationBarBackgroundColor: "#07C160",
+      navigationBarTextStyle: "white"
+    }
+  },
+  {
     path: "pages/admin/review",
     style: {
       navigationBarTitleText: "文章审核",
@@ -7747,6 +7755,22 @@ const pages = [
       navigationBarTitleText: "用户管理",
       navigationBarBackgroundColor: "#FFFFFF",
       navigationBarTextStyle: "black"
+    }
+  },
+  {
+    path: "pages/admin/url-fetch",
+    style: {
+      navigationBarTitleText: "URL抓取测试",
+      navigationBarBackgroundColor: "#07C160",
+      navigationBarTextStyle: "white"
+    }
+  },
+  {
+    path: "pages/admin/simple-fetch",
+    style: {
+      navigationBarTitleText: "简化抓取测试",
+      navigationBarBackgroundColor: "#07C160",
+      navigationBarTextStyle: "white"
     }
   }
 ];
@@ -8080,7 +8104,7 @@ class v {
 function I(e2) {
   return e2 && "string" == typeof e2 ? JSON.parse(e2) : e2;
 }
-const S = true, b = "mp-weixin", A = I(define_process_env_UNI_SECURE_NETWORK_CONFIG_default), C = b, P = I('{\n    "address": [\n        "127.0.0.1",\n        "198.18.0.1",\n        "192.168.63.1",\n        "192.168.198.1",\n        "192.168.1.5",\n        "172.24.240.1"\n    ],\n    "debugPort": 9000,\n    "initialLaunchType": "remote",\n    "servePort": 7000,\n    "skipFiles": [\n        "<node_internals>/**",\n        "E:/HBuilderX/plugins/unicloud/**/*.js"\n    ]\n}\n'), T = I('[{"provider":"aliyun","spaceName":"xyt-mvp","spaceId":"mp-bb59eea9-90f9-4578-9c26-efd08bc921dd","clientSecret":"kt4dXSoXoE9wHBxhXrCawA==","endpoint":"https://api.next.bspapp.com"}]') || [];
+const S = true, b = "mp-weixin", A = I(define_process_env_UNI_SECURE_NETWORK_CONFIG_default), C = b, P = I('{\n    "address": [\n        "127.0.0.1",\n        "192.168.63.1",\n        "192.168.198.1",\n        "10.225.1.42",\n        "172.17.64.1"\n    ],\n    "debugPort": 9000,\n    "initialLaunchType": "remote",\n    "servePort": 7000,\n    "skipFiles": [\n        "<node_internals>/**",\n        "E:/HBuilderX/plugins/unicloud/**/*.js"\n    ]\n}\n'), T = I('[{"provider":"aliyun","spaceName":"xyt-mvp","spaceId":"mp-bb59eea9-90f9-4578-9c26-efd08bc921dd","clientSecret":"kt4dXSoXoE9wHBxhXrCawA==","endpoint":"https://api.next.bspapp.com"}]') || [];
 let O = "";
 try {
   O = "__UNI__5005951";

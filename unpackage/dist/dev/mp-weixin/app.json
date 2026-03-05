@@ -14,9 +14,12 @@
     "pages/login/login",
     "pages/search/search",
     "pages/admin/dashboard",
+    "pages/admin/wc-test",
     "pages/admin/review",
     "pages/admin/sources",
-    "pages/admin/users"
+    "pages/admin/users",
+    "pages/admin/url-fetch",
+    "pages/admin/simple-fetch"
   ],
   "window": {
     "navigationBarTextStyle": "black",

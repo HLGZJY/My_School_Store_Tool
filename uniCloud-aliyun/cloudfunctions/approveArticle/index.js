@@ -6,24 +6,33 @@ const db = uniCloud.database();
  * 验证管理员权限
  */
 async function verifyAdmin(openid) {
+    console.log('[approveArticle] 验证管理员, openid:', openid);
+
     const admin = await db.collection('admins')
         .where({ openid, status: 'active' })
         .get();
+
+    console.log('[approveArticle] 管理员查询结果:', admin.data.length);
 
     if (!admin.data.length) {
         throw new Error('无管理员权限');
     }
 
     const permissions = admin.data[0].permissions || [];
-    if (!permissions.includes('approve') && !permissions.includes('all')) {
-        throw new Error('无审核权限');
+    console.log('[approveArticle] 权限列表:', permissions);
+
+    // 有 all 权限，或者有 approve 权限
+    if (permissions.includes('all') || permissions.includes('approve')) {
+        return admin.data[0];
     }
 
-    return admin.data[0];
+    throw new Error('无审核权限');
 }
 
 exports.main = async (event, context) => {
-    const openid = context.OPENID;
+    // 优先使用前端传入的 openid，fallback 到 context.OPENID
+    const paramOpenid = event.openid;
+    const openid = paramOpenid || context.OPENID;
     const { articleId, action, note } = event;
 
     try {
@@ -47,7 +56,7 @@ exports.main = async (event, context) => {
 
         // 执行审核操作
         let updateData = {
-            updateTime: Date.now()
+            updatedAt: Date.now()
         };
 
         if (action === 'approve') {

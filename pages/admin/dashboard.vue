@@ -60,6 +60,24 @@
                     </view>
                     <text class="menu-text">用户管理</text>
                 </view>
+                <view class="menu-item" @click="goToWcTest">
+                    <view class="menu-icon wc">
+                        <uni-icons type="weixin" size="24" color="#07C160"></uni-icons>
+                    </view>
+                    <text class="menu-text">微信采集</text>
+                </view>
+                <view class="menu-item" @click="goToUrlFetch">
+                    <view class="menu-icon url-fetch">
+                        <uni-icons type="link" size="24" color="#FF9500"></uni-icons>
+                    </view>
+                    <text class="menu-text">URL抓取</text>
+                </view>
+                <view class="menu-item" @click="goToSimpleFetch">
+                    <view class="menu-icon simple-fetch">
+                        <uni-icons type="search" size="24" color="#5856D6"></uni-icons>
+                    </view>
+                    <text class="menu-text">简化测试</text>
+                </view>
             </view>
         </view>
 
@@ -153,7 +171,12 @@ export default {
 
                         try {
                             const res = await uniCloud.callFunction({
-                                name: 'syncSource'
+                                name: 'fetchUrl',
+                                data: {
+                                    action: 'test',
+                                    openid: uni.getStorageSync('openid')
+                                },
+                                timeout: 60000
                             })
 
                             uni.hideLoading()
@@ -200,6 +223,27 @@ export default {
         goToUsers() {
             uni.navigateTo({
                 url: '/pages/admin/users'
+            })
+        },
+
+        // 跳转微信采集测试
+        goToWcTest() {
+            uni.navigateTo({
+                url: '/pages/admin/wc-test'
+            })
+        },
+
+        // 跳转 URL 抓取测试
+        goToUrlFetch() {
+            uni.navigateTo({
+                url: '/pages/admin/url-fetch'
+            })
+        },
+
+        // 跳转简化抓取测试
+        goToSimpleFetch() {
+            uni.navigateTo({
+                url: '/pages/admin/simple-fetch'
             })
         },
 
@@ -341,6 +385,9 @@ export default {
                 &.review { background-color: #FFF3E0; }
                 &.source { background-color: #E3F2FD; }
                 &.users { background-color: #F3E5F5; }
+                &.wc { background-color: #E0F2F1; }
+                &.url-fetch { background-color: #FFF3E0; }
+                &.simple-fetch { background-color: #E3F2FD; }
             }
 
             .menu-text {
