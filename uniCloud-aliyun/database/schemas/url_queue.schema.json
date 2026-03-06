@@ -31,6 +31,11 @@
 			"description": "数据源名称",
 			"label": "数据源名称"
 		},
+		"category": {
+			"bsonType": "string",
+			"description": "分类标识，从URL路径提取，如 wyxy(外语学院), jwc(教务处)",
+			"label": "分类"
+		},
 		"status": {
 			"bsonType": "string",
 			"description": "状态：pending-待处理, processing-处理中, processed-已处理, failed-失败",

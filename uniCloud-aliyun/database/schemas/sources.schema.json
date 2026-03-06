@@ -1,7 +1,7 @@
 {
 	"bsonType": "object",
 	"description": "数据源表 - 校园信息订阅来源",
-	"required": ["sourceId", "sourceName", "sourceType"],
+	"required": ["sourceId", "sourceName", "sourceType", "config"],
 	"permission": {
 		"read": true,
 		"create": false,
@@ -15,15 +15,16 @@
 		},
 		"sourceId": {
 			"bsonType": "string",
-			"description": "来源标识，唯一"
+			"description": "来源标识，如 wyxy, jwc（从URL路径提取）"
 		},
 		"sourceName": {
 			"bsonType": "string",
-			"description": "来源名称"
+			"description": "来源名称，如 外语学院、教务处"
 		},
 		"sourceType": {
 			"bsonType": "string",
-			"description": "来源类型：official-官方部门/college-学院"
+			"enum": ["official", "college", "rss", "api", "website", "manual"],
+			"description": "来源类型：official-官方部门/college-学院/rss/api/website/manual"
 		},
 		"description": {
 			"bsonType": "string",
@@ -31,11 +32,102 @@
 		},
 		"category": {
 			"bsonType": "string",
-			"description": "所属分类"
+			"description": "分类标识，从URL路径提取"
 		},
 		"enabled": {
 			"bsonType": "bool",
 			"description": "是否启用"
+		},
+		"config": {
+			"bsonType": "object",
+			"description": "配置信息",
+			"properties": {
+				"url": {
+					"bsonType": "string",
+					"description": "列表页URL"
+				},
+				"listPattern": {
+					"bsonType": "string",
+					"description": "列表页URL模板"
+				},
+				"articlePattern": {
+					"bsonType": "string",
+					"description": "文章URL匹配规则"
+				}
+			}
+		},
+		"schedule": {
+			"bsonType": "object",
+			"description": "定时任务配置",
+			"properties": {
+				"interval": {
+					"bsonType": "long",
+					"description": "采集间隔(毫秒)，默认1小时"
+				},
+				"lastRunTime": {
+					"bsonType": "long",
+					"description": "上次运行时间"
+				},
+				"nextRunTime": {
+					"bsonType": "long",
+					"description": "下次运行时间"
+				},
+				"autoSync": {
+					"bsonType": "bool",
+					"description": "是否开启定时同步"
+				}
+			}
+		},
+		"defaultTags": {
+			"bsonType": "object",
+			"description": "默认标签",
+			"properties": {
+				"source": {
+					"bsonType": "array",
+					"items": { "bsonType": "string" },
+					"description": "来源标签"
+				},
+				"role": {
+					"bsonType": "array",
+					"items": { "bsonType": "string" },
+					"description": "角色标签"
+				},
+				"custom": {
+					"bsonType": "array",
+					"items": { "bsonType": "string" },
+					"description": "自定义标签"
+				}
+			}
+		},
+		"stats": {
+			"bsonType": "object",
+			"description": "统计信息",
+			"properties": {
+				"totalArticles": {
+					"bsonType": "int",
+					"description": "文章总数"
+				},
+				"lastFetchCount": {
+					"bsonType": "int",
+					"description": "上次抓取数量"
+				},
+				"lastCheckTime": {
+					"bsonType": "long",
+					"description": "上次检查时间"
+				},
+				"hasUpdates": {
+					"bsonType": "bool",
+					"description": "是否有更新"
+				}
+			}
+		},
+		"createTime": {
+			"bsonType": "long",
+			"description": "创建时间"
+		},
+		"updateTime": {
+			"bsonType": "long",
+			"description": "更新时间"
 		}
 	}
 }

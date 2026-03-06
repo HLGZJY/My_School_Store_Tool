@@ -15,8 +15,9 @@
             >
                 <view class="source-header">
                     <view class="source-info">
-                        <text class="source-name">{{ item.name }}</text>
-                        <text :class="['source-type', item.type]">{{ getTypeText(item.type) }}</text>
+                        <text class="source-name">{{ item.sourceName }}</text>
+                        <text :class="['source-type', item.sourceType]">{{ getTypeText(item.sourceType) }}</text>
+                        <text v-if="item.category" class="source-category">[{{ item.category }}]</text>
                     </view>
                     <switch
                         :checked="item.enabled"
@@ -28,6 +29,7 @@
                 <view class="source-stats">
                     <text>文章数: {{ item.stats?.totalArticles || 0 }}</text>
                     <text>最后采集: {{ formatTime(item.schedule?.lastRunTime) }}</text>
+                    <text v-if="item.stats?.hasUpdates" class="update-badge">有更新</text>
                 </view>
                 <view class="source-actions">
                     <view class="action-btn" @click="editSource(item)">编辑</view>
@@ -65,7 +67,29 @@
 
                 <view class="form-group">
                     <text class="label">URL</text>
-                    <input class="input" v-model="formData.url" placeholder="数据源地址" />
+                    <view class="url-input-group">
+                        <input class="input" v-model="formData.url" placeholder="数据源地址，如 https://www.scuec.edu.cn/wyxy/..." @blur="onUrlBlur" />
+                        <button class="analyze-btn" @click="analyzeUrl" :disabled="analyzing">
+                            {{ analyzing ? '分析中...' : '智能分析' }}
+                        </button>
+                    </view>
+                </view>
+
+                <!-- 智能分析建议 -->
+                <view v-if="suggestion" class="suggestion-box">
+                    <view class="suggestion-header">智能建议（可修改）</view>
+                    <view class="form-group">
+                        <text class="label">来源ID</text>
+                        <input class="input" v-model="formData.sourceId" placeholder="自动提取" />
+                    </view>
+                    <view class="form-group">
+                        <text class="label">来源名称</text>
+                        <input class="input" v-model="formData.sourceName" placeholder="自动获取" />
+                    </view>
+                    <view class="form-group">
+                        <text class="label">分类</text>
+                        <input class="input" v-model="formData.category" placeholder="自动提取" />
+                    </view>
                 </view>
 
                 <view class="form-group">
@@ -92,11 +116,15 @@ export default {
             loading: false,
             isEdit: false,
             editId: null,
-            sourceTypes: ['RSS订阅', 'API接口', '网站抓取', '手动录入'],
+            analyzing: false,
+            suggestion: null,
+            sourceTypes: ['官方部门', '学院', 'RSS订阅', 'API接口', '网站抓取', '手动录入'],
             formData: {
-                name: '',
-                typeIndex: 1,
-                type: 'api',
+                sourceId: '',
+                sourceName: '',
+                category: '',
+                typeIndex: 4,
+                type: 'website',
                 url: '',
                 interval: 60,
                 defaultTags: ''
@@ -126,18 +154,71 @@ export default {
         },
 
         onTypeChange(e) {
-            const types = ['rss', 'api', 'website', 'manual']
+            const types = ['official', 'college', 'rss', 'api', 'website', 'manual']
             this.formData.typeIndex = e.detail.value
             this.formData.type = types[e.detail.value]
+        },
+
+        // URL失去焦点时自动分析
+        async onUrlBlur() {
+            if (this.formData.url && !this.suggestion) {
+                await this.analyzeUrl()
+            }
+        },
+
+        // 智能分析URL
+        async analyzeUrl() {
+            if (!this.formData.url) {
+                uni.showToast({ title: '请先输入URL', icon: 'none' })
+                return
+            }
+
+            // 检查URL格式
+            if (!this.formData.url.startsWith('http://') && !this.formData.url.startsWith('https://')) {
+                uni.showToast({ title: '请输入以http://或https://开头的URL', icon: 'none' })
+                return
+            }
+
+            this.analyzing = true
+            try {
+                const res = await uniCloud.callFunction({
+                    name: 'manageSources',
+                    data: { action: 'analyze', url: this.formData.url }
+                })
+
+                if (res.result.code === 0) {
+                    this.suggestion = res.result.data
+                    // 自动填充表单
+                    this.formData.sourceId = res.result.data.sourceId || ''
+                    this.formData.sourceName = res.result.data.sourceName || ''
+                    this.formData.category = res.result.data.category || ''
+                    this.formData.type = res.result.data.sourceType || 'website'
+
+                    const typeMap = { official: 0, college: 1, rss: 2, api: 3, website: 4, manual: 5 }
+                    this.formData.typeIndex = typeMap[this.formData.type] || 4
+
+                    uni.showToast({ title: '分析成功', icon: 'success' })
+                } else {
+                    uni.showToast({ title: res.result.message || '分析失败', icon: 'none' })
+                }
+            } catch (e) {
+                console.error('分析失败:', e)
+                uni.showToast({ title: '分析失败', icon: 'none' })
+            } finally {
+                this.analyzing = false
+            }
         },
 
         showAddModal() {
             this.isEdit = false
             this.editId = null
+            this.suggestion = null
             this.formData = {
-                name: '',
-                typeIndex: 1,
-                type: 'api',
+                sourceId: '',
+                sourceName: '',
+                category: '',
+                typeIndex: 4,
+                type: 'website',
                 url: '',
                 interval: 60,
                 defaultTags: ''
@@ -148,12 +229,15 @@ export default {
         editSource(item) {
             this.isEdit = true
             this.editId = item._id
+            this.suggestion = null
 
-            const typeMap = { rss: 0, api: 1, website: 2, manual: 3 }
+            const typeMap = { official: 0, college: 1, rss: 2, api: 3, website: 4, manual: 5 }
             this.formData = {
-                name: item.name,
-                typeIndex: typeMap[item.type] || 1,
-                type: item.type,
+                sourceId: item.sourceId || '',
+                sourceName: item.sourceName || '',
+                category: item.category || '',
+                typeIndex: typeMap[item.sourceType] || 4,
+                type: item.sourceType || 'website',
                 url: item.config?.url || '',
                 interval: (item.schedule?.interval || 3600000) / 60000,
                 defaultTags: item.defaultTags?.source?.join(',') || ''
@@ -170,8 +254,8 @@ export default {
                 const res = await uniCloud.callFunction({
                     name: 'manageSources',
                     data: {
-                        action: 'update',
-                        sourceId: item._id,
+                        action: 'toggle',
+                        id: item._id,
                         enabled: !item.enabled
                     }
                 })
@@ -187,15 +271,17 @@ export default {
         },
 
         async submitSource() {
-            if (!this.formData.name || !this.formData.url) {
-                uni.showToast({ title: '请填写完整信息', icon: 'none' })
+            if (!this.formData.sourceName || !this.formData.url) {
+                uni.showToast({ title: '请填写来源名称和URL', icon: 'none' })
                 return
             }
 
             const data = {
                 action: this.isEdit ? 'update' : 'create',
-                name: this.formData.name,
-                type: this.formData.type,
+                sourceId: this.formData.sourceId,
+                sourceName: this.formData.sourceName,
+                sourceType: this.formData.type,
+                category: this.formData.category || this.formData.sourceId,
                 config: {
                     url: this.formData.url
                 },
@@ -203,14 +289,14 @@ export default {
                     interval: this.formData.interval * 60000
                 },
                 defaultTags: {
-                    source: this.formData.defaultTags.split(',').filter(t => t),
+                    source: this.formData.defaultTags ? this.formData.defaultTags.split(',').filter(t => t) : [],
                     role: ['通用'],
                     custom: []
                 }
             }
 
             if (this.isEdit) {
-                data.sourceId = this.editId
+                data.id = this.editId
             }
 
             try {
@@ -259,7 +345,7 @@ export default {
         deleteSource(item) {
             uni.showModal({
                 title: '确认删除',
-                content: `确定要删除"${item.name}"吗？`,
+                content: `确定要删除"${item.sourceName}"吗？`,
                 success: async (res) => {
                     if (res.confirm) {
                         try {
@@ -267,7 +353,7 @@ export default {
                                 name: 'manageSources',
                                 data: {
                                     action: 'delete',
-                                    sourceId: item._id
+                                    id: item._id
                                 }
                             })
 
@@ -285,6 +371,8 @@ export default {
 
         getTypeText(type) {
             const map = {
+                official: '官方',
+                college: '学院',
                 rss: 'RSS',
                 api: 'API',
                 website: '网站',
@@ -353,10 +441,17 @@ export default {
                     background-color: #E3F2FD;
                     color: #007AFF;
 
+                    &.official { background-color: #E3F2FD; color: #007AFF; }
+                    &.college { background-color: #F3E5F5; color: #5856D6; }
                     &.rss { background-color: #FFF3E0; color: #FF9500; }
                     &.api { background-color: #E3F2FD; color: #007AFF; }
                     &.website { background-color: #F3E5F5; color: #5856D6; }
                     &.manual { background-color: #E8F5E9; color: #07C160; }
+                }
+
+                .source-category {
+                    font-size: 12px;
+                    color: #999;
                 }
             }
         }
@@ -376,6 +471,15 @@ export default {
             font-size: 12px;
             color: #666;
             margin-bottom: 12px;
+            align-items: center;
+
+            .update-badge {
+                background-color: #FF3B30;
+                color: #fff;
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-size: 10px;
+            }
         }
 
         .source-actions {
@@ -450,6 +554,45 @@ export default {
             padding: 0 12px;
             line-height: 44px;
             font-size: 14px;
+        }
+
+        .url-input-group {
+            display: flex;
+            gap: 8px;
+
+            .input {
+                flex: 1;
+            }
+
+            .analyze-btn {
+                width: 90px;
+                height: 44px;
+                background-color: #07C160;
+                color: #fff;
+                border-radius: 8px;
+                font-size: 12px;
+                padding: 0;
+                line-height: 44px;
+
+                &[disabled] {
+                    background-color: #ccc;
+                }
+            }
+        }
+    }
+
+    .suggestion-box {
+        background-color: #F0F9FF;
+        border: 1px solid #B3E0FF;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 16px;
+
+        .suggestion-header {
+            font-size: 12px;
+            color: #007AFF;
+            margin-bottom: 12px;
+            font-weight: 600;
         }
     }
 

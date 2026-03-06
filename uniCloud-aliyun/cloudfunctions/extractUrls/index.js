@@ -223,6 +223,9 @@ async function saveLinksToQueue(links, sourceUrl, sourceId, sourceName) {
     let newCount = 0;
     let existCount = 0;
 
+    // 从sourceUrl提取category
+    const category = extractSourceIdFromUrl(sourceUrl);
+
     for (const url of links) {
         // 检查是否已存在
         const existing = await db.collection('url_queue').where({ url }).get();
@@ -240,6 +243,7 @@ async function saveLinksToQueue(links, sourceUrl, sourceId, sourceName) {
                 sourceUrl,
                 sourceId: sourceId || null,
                 sourceName: sourceName || '未知来源',
+                category: category || sourceId || null,  // 分类标识
                 status: 'pending',
                 fetchTime: now,
                 processTime: null,
