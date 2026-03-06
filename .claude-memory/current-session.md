@@ -1,105 +1,110 @@
-# 会话状态 2026-03-05 - URL 提取与解析分离
+ # 会话状态 2026-03-06 - 数据源管理与链接池优化
 
-## 项目背景
+  ## 项目背景
 
-校园信息发布工具小程序（uni-app + uniCloud + MongoDB）
+  校园信息发布工具小程序（uni-app + uniCloud + MongoDB）
 
----
+  ---
 
-## 本次会话完成的工作
+  ## 本次会话完成的工作
 
-### 1. 功能架构重构 - 链接池模式
+  ### 1. 删除 fetchUrl 云函数
 
-将原有的 simpleFetch 拆分为三个独立云函数：
+  将原有 fetchUrl 云函数删除，由 extractUrls 和 parseArticles
+  替代：
+  - 删除 fetchUrl 云函数目录
+  - 删除 url-fetch.vue 页面
+  - 移除 dashboard.vue 中的手动采集和URL抓取菜单
 
-| 云函数 | 功能 |
-|--------|------|
-| extractUrls | 从列表页提取链接，存入链接池 |
-| parseArticles | 从链接池获取链接，AI解析后存入文章库 |
-| fetchUrl | 通用 URL 内容获取工具 |
+  ### 2. 文章存储逻辑优化
 
-#### 链接池设计 (url_queue)
-```json
-{
-  "url": "文章链接",
-  "sourceId": "数据源ID",
-  "sourceName": "数据源名称",
-  "status": "pending|processing|completed|failed",
-  "retryCount": 0,
-  "createTime": timestamp,
-  "updateTime": timestamp
-}
-```
+  修改了 3 个云函数的文章存储逻辑：
 
-### 2. 审核功能修复
+  | 云函数 | 修改内容 |
+  |--------|----------|
+  | parseArticles | 添加 extractSourceIdFromUrl
+  从URL提取sourceId；添加 getSourceNameFromDb 从sources表获取中文
+   |
+  | extractUrls |
+  同上，自动处理未选择数据源时的sourceId和sourceName |
+  | simpleFetch | 同上，添加categoryName完整映射 |
 
-- **approveArticle** 云函数：添加 openid 参数支持
-- **adminGetArticles** 云函数：支持前端传入 status 筛选
-- **review.vue** 页面：修复通过/拒绝功能
+  **字段处理逻辑：**
+  - sourceId：从URL路径自动提取（如 /bwc/tztg.htm → bwc）
+  - sourceName：优先使用传入值 → 数据库查询 → 默认值
+  - categoryName：完整映射（notice→通知公告, academic→学术动态等）
+  - tags.source：更新为实际来源中文名
 
-### 3. 新增云函数
+  ### 3. 数据源管理和链接池优化（主要工作）
 
-- `extractUrls` - 链接提取
-- `fetchUrl` - URL 内容获取
-- `parseArticles` - 文章解析
-- `wc-*` 系列 - 微信公众号文章采集（预留）
+  #### 3.1 Schema 统一
+  - **sources.schema.json**：新增字段 category, config, schedule,
+  defaultTags, stats
+  - **url_queue.schema.json**：新增 category 字段
 
-### 4. 管理后台页面
+  #### 3.2 智能分析功能
+  - **manageSources 云函数**：新增 analyze action
+    - extractCategoryFromUrl() - 从URL提取分类标识
+    - fetchPageTitle() - 获取网页标题作为 sourceName
+    - inferSourceNameFromDomain() - 从域名推断来源名称
 
-- `simple-fetch.vue` - 重构为两个 Tab：
-  - Tab1: 链接提取
-  - Tab2: 文章解析
-- `url-fetch.vue` - URL 抓取测试
-- `wc-test.vue` - 微信采集测试
+  #### 3.3 前端改造
+  - **sources.vue**：
+    - 添加"智能分析"按钮
+    - 自动填充 sourceId/sourceName/category 供管理员修改
+    - URL 失去焦点时自动分析
+    - 支持新的 sourceId/sourceName/sourceType 字段
 
-### 5. Git 提交与推送
+  ---
 
-- 修复 node_modules 误提交问题
-- 切换为 SSH 方式推送
-- 成功推送到 HLGZJY/My_School_Store_Tool
+  ## 修改的文件
 
----
+  | 文件 | 修改内容 |
+  |------|----------|
+  | pages/admin/dashboard.vue | 删除 fetchUrl 相关代码 |
+  | pages/admin/sources.vue | 全面改造，支持智能分析和新字段 |
+  | uniCloud-aliyun/cloudfunctions/manageSources/index.js | 新增
+  analyze action，改造字段 |
+  | uniCloud-aliyun/cloudfunctions/manageSources/package.json |
+  添加 axios 依赖 |
+  | uniCloud-aliyun/cloudfunctions/extractUrls/index.js | 写入
+  category 字段 |
+  | uniCloud-aliyun/cloudfunctions/parseArticles/index.js | 优化
+  sourceId/sourceName 逻辑 |
+  | uniCloud-aliyun/cloudfunctions/simpleFetch/index.js | 优化
+  sourceId/sourceName 逻辑 |
+  | uniCloud-aliyun/database/schemas/sources.schema.json |
+  统一字段定义 |
+  | uniCloud-aliyun/database/schemas/url_queue.schema.json | 新增
+  category 字段 |
 
-## 修改的文件
+  ---
 
-### 新增文件
-- `.gitignore`
-- `pages/admin/url-fetch.vue`
-- `pages/admin/wc-test.vue`
-- `uniCloud-aliyun/cloudfunctions/extractUrls/` (3个文件)
-- `uniCloud-aliyun/cloudfunctions/fetchUrl/` (3个文件)
-- `uniCloud-aliyun/cloudfunctions/parseArticles/` (3个文件)
-- `uniCloud-aliyun/cloudfunctions/wc-article-list/`
-- `uniCloud-aliyun/cloudfunctions/wc-download-article/`
-- `uniCloud-aliyun/cloudfunctions/wc-login/`
-- `uniCloud-aliyun/cloudfunctions/wc-search-account/`
-- `uniCloud-aliyun/cloudfunctions/wc-sync-articles/`
-- `uniCloud-aliyun/database/schemas/url_queue.schema.json`
-- `uniCloud-aliyun/database/schemas/wc_credentials.schema.json`
+  ## 待完成功能
 
-### 修改文件
-- `pages.json` - 添加新页面路由
-- `pages/admin/dashboard.vue`
-- `pages/admin/review.vue`
-- `pages/admin/simple-fetch.vue`
-- `uniCloud-aliyun/cloudfunctions/adminGetArticles/index.js`
-- `uniCloud-aliyun/cloudfunctions/approveArticle/index.js`
-- `uniCloud-aliyun/cloudfunctions/simpleFetch/index.js`
+  ### 定时检查功能（Phase 4）
+  - 创建 checkSourceUpdates 云函数
+  - 定时检测数据源更新
+  - 自动将新链接存入链接池
+  - 支持手动触发
 
----
+  ---
 
-## 待测试
+  ## Git 提交记录
 
-1. 上传新增云函数到 uniCloud
-2. 测试链接提取功能
-3. 测试文章解析功能
-4. 测试审核流程
+  | Commit | 描述 |
+  |--------|------|
+  | 4e6ec42 | refactor:
+  删除fetchUrl云函数，由extractUrls和parseArticles替代 |
+  | 3c10e1f | feat: 优化文章存储逻辑 - 自动提取sourceId和sourceName
+   |
+  | e4ab774 | feat: 数据源管理和链接池优化 |
 
----
+  ---
 
-## 技术栈
+  ## 技术栈
 
-- 前端：uni-app (Vue3)
-- 后端：uniCloud (Node.js)
-- 数据库：MongoDB (阿里云)
-- AI：Moonshot Kimi API
+  - 前端：uni-app (Vue3)
+  - 后端：uniCloud (Node.js)
+  - 数据库：MongoDB (阿里云)
+  - AI：Moonshot Kimi API
