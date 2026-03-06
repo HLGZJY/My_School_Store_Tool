@@ -35,12 +35,6 @@
         <view class="menu-section">
             <text class="section-title">数据管理</text>
             <view class="menu-grid">
-                <view class="menu-item" @click="handleSync">
-                    <view class="menu-icon sync">
-                        <uni-icons type="refresh" size="24" color="#07C160"></uni-icons>
-                    </view>
-                    <text class="menu-text">手动采集</text>
-                </view>
                 <view class="menu-item" @click="goToReview">
                     <view class="menu-icon review">
                         <uni-icons type="flag" size="24" color="#FF9500"></uni-icons>
@@ -65,12 +59,6 @@
                         <uni-icons type="weixin" size="24" color="#07C160"></uni-icons>
                     </view>
                     <text class="menu-text">微信采集</text>
-                </view>
-                <view class="menu-item" @click="goToUrlFetch">
-                    <view class="menu-icon url-fetch">
-                        <uni-icons type="link" size="24" color="#FF9500"></uni-icons>
-                    </view>
-                    <text class="menu-text">URL抓取</text>
                 </view>
                 <view class="menu-item" @click="goToSimpleFetch">
                     <view class="menu-icon simple-fetch">
@@ -160,51 +148,6 @@ export default {
             }
         },
 
-        // 手动采集
-        async handleSync() {
-            uni.showModal({
-                title: '确认采集',
-                content: '确定要立即执行数据采集吗？',
-                success: async (res) => {
-                    if (res.confirm) {
-                        uni.showLoading({ title: '采集中...' })
-
-                        try {
-                            const res = await uniCloud.callFunction({
-                                name: 'fetchUrl',
-                                data: {
-                                    action: 'test',
-                                    openid: uni.getStorageSync('openid')
-                                },
-                                timeout: 60000
-                            })
-
-                            uni.hideLoading()
-
-                            if (res.result.code === 0) {
-                                uni.showToast({
-                                    title: `采集完成，新增${res.result.data.newArticles}篇`,
-                                    icon: 'success'
-                                })
-                                this.loadStats()
-                            } else {
-                                uni.showToast({
-                                    title: res.result.message || '采集失败',
-                                    icon: 'none'
-                                })
-                            }
-                        } catch (e) {
-                            uni.hideLoading()
-                            uni.showToast({
-                                title: '采集失败',
-                                icon: 'none'
-                            })
-                        }
-                    }
-                }
-            })
-        },
-
         // 跳转审核页面
         goToReview() {
             uni.navigateTo({
@@ -230,13 +173,6 @@ export default {
         goToWcTest() {
             uni.navigateTo({
                 url: '/pages/admin/wc-test'
-            })
-        },
-
-        // 跳转 URL 抓取测试
-        goToUrlFetch() {
-            uni.navigateTo({
-                url: '/pages/admin/url-fetch'
             })
         },
 
@@ -386,7 +322,6 @@ export default {
                 &.source { background-color: #E3F2FD; }
                 &.users { background-color: #F3E5F5; }
                 &.wc { background-color: #E0F2F1; }
-                &.url-fetch { background-color: #FFF3E0; }
                 &.simple-fetch { background-color: #E3F2FD; }
             }
 

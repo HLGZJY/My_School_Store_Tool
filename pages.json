@@ -149,14 +149,6 @@
             }
         },
         {
-            "path": "pages/admin/url-fetch",
-            "style": {
-                "navigationBarTitleText": "URL抓取测试",
-                "navigationBarBackgroundColor": "#07C160",
-                "navigationBarTextStyle": "white"
-            }
-        },
-        {
             "path": "pages/admin/simple-fetch",
             "style": {
                 "navigationBarTitleText": "简化抓取测试",

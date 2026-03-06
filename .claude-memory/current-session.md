@@ -1,105 +1,105 @@
-# 会话状态 2026-03-03 - URL 抓取功能开发
+# 会话状态 2026-03-05 - URL 提取与解析分离
 
-  ## 项目背景
-  校园信息发布工具小程序（uni-app + uniCloud）
+## 项目背景
 
-  ## 本次会话完成的工作
+校园信息发布工具小程序（uni-app + uniCloud + MongoDB）
 
-  ### 1. simpleFetch 云函数优化
+---
 
-  #### 修复的问题
-  - 超时设置：从60秒改为5分钟（300000ms）
-  - 分页检测：改为实际访问 `URL/1.htm` 来检测分页
-  - 分页遍历：从第1页开始递增获取，遇到404停止
-  - 前端优化：超时时间改为300秒，失败时显示错误原因
+## 本次会话完成的工作
 
-  #### 代码精简
-  - 从437行精简到约240行
-  - 统一函数命名：httpGet、kimiFetch、aiParse、saveArticle
+### 1. 功能架构重构 - 链接池模式
 
-  ### 2. 功能测试结果
+将原有的 simpleFetch 拆分为三个独立云函数：
 
-  测试URL：https://www.scuec.edu.cn/cxcy/scss/jstz.htm
+| 云函数 | 功能 |
+|--------|------|
+| extractUrls | 从列表页提取链接，存入链接池 |
+| parseArticles | 从链接池获取链接，AI解析后存入文章库 |
+| fetchUrl | 通用 URL 内容获取工具 |
 
-  日志显示：
-  - 第1页提取到17个链接
-  - 检测到分页，开始遍历
-  - 共提取到链接数量: 103
-  - 处理 1/50: ...
+#### 链接池设计 (url_queue)
+```json
+{
+  "url": "文章链接",
+  "sourceId": "数据源ID",
+  "sourceName": "数据源名称",
+  "status": "pending|processing|completed|failed",
+  "retryCount": 0,
+  "createTime": timestamp,
+  "updateTime": timestamp
+}
+```
 
-  **已实现功能**：
-  - ✅ 提取链接（需优化过滤）
-  - ✅ 分页遍历
-  - ⚠️ AI解析（未正常执行）
-  - ⚠️ 保存入库（未正常执行）
+### 2. 审核功能修复
 
-  ### 3. 问题分析
-  1. 提取了非文章链接：index.htm、jczc.htm、list.htm等
-  2. AI解析和保存入库未执行
-  3. 需要区分"首次抓取"和"检查更新"两种状态
-  4. 需要联动数据源（sources集合）
+- **approveArticle** 云函数：添加 openid 参数支持
+- **adminGetArticles** 云函数：支持前端传入 status 筛选
+- **review.vue** 页面：修复通过/拒绝功能
 
-  ### 4. 创建开发文档
-  在 uniCloud-aliyun/cloudfunctions/simpleFetch/README.md
-  中创建了完整的开发文档
+### 3. 新增云函数
 
-  ---
+- `extractUrls` - 链接提取
+- `fetchUrl` - URL 内容获取
+- `parseArticles` - 文章解析
+- `wc-*` 系列 - 微信公众号文章采集（预留）
 
-  ## 开发计划摘要
+### 4. 管理后台页面
 
-  ### 阶段一：修复问题（高优先级）
-  - [ ] 优化链接过滤
-  - [ ] 修复AI解析未执行问题
-  - [ ] 增加重试机制
+- `simple-fetch.vue` - 重构为两个 Tab：
+  - Tab1: 链接提取
+  - Tab2: 文章解析
+- `url-fetch.vue` - URL 抓取测试
+- `wc-test.vue` - 微信采集测试
 
-  ### 阶段二：核心功能（高优先级）
-  - [ ] 数据源联动（sources集合）
-  - [ ] 两种状态区分（full/update）
+### 5. Git 提交与推送
 
-  ### 阶段三：定时触发（中优先级）
-  - [ ] 定时任务自动检查更新
+- 修复 node_modules 误提交问题
+- 切换为 SSH 方式推送
+- 成功推送到 HLGZJY/My_School_Store_Tool
 
-  ---
+---
 
-  ## 待处理
-  1. 上传云函数测试
-  2. 优化链接过滤逻辑
-  3. 排查AI解析未执行问题
-  4. 实现数据源联动
+## 修改的文件
 
-  ---
+### 新增文件
+- `.gitignore`
+- `pages/admin/url-fetch.vue`
+- `pages/admin/wc-test.vue`
+- `uniCloud-aliyun/cloudfunctions/extractUrls/` (3个文件)
+- `uniCloud-aliyun/cloudfunctions/fetchUrl/` (3个文件)
+- `uniCloud-aliyun/cloudfunctions/parseArticles/` (3个文件)
+- `uniCloud-aliyun/cloudfunctions/wc-article-list/`
+- `uniCloud-aliyun/cloudfunctions/wc-download-article/`
+- `uniCloud-aliyun/cloudfunctions/wc-login/`
+- `uniCloud-aliyun/cloudfunctions/wc-search-account/`
+- `uniCloud-aliyun/cloudfunctions/wc-sync-articles/`
+- `uniCloud-aliyun/database/schemas/url_queue.schema.json`
+- `uniCloud-aliyun/database/schemas/wc_credentials.schema.json`
 
-  ## 技术栈
-  - 前端：uni-app (Vue3)
-  - 后端：uniCloud (Node.js)
-  - AI：Moonshot Kimi API
+### 修改文件
+- `pages.json` - 添加新页面路由
+- `pages/admin/dashboard.vue`
+- `pages/admin/review.vue`
+- `pages/admin/simple-fetch.vue`
+- `uniCloud-aliyun/cloudfunctions/adminGetArticles/index.js`
+- `uniCloud-aliyun/cloudfunctions/approveArticle/index.js`
+- `uniCloud-aliyun/cloudfunctions/simpleFetch/index.js`
 
+---
 
-当前进度摘要（2026-03-04）：
+## 待测试
 
-  ---
-  本次完成的工作：
+1. 上传新增云函数到 uniCloud
+2. 测试链接提取功能
+3. 测试文章解析功能
+4. 测试审核流程
 
-  1. 链接过滤优化 ✅
-    - 问题：提取了 index.htm、jczc.htm 等非文章链接
-    - 解决：正则改为 /\d+\/(\d{4,})\.(htm|html?)$/i，只保留
-  1030/1957.htm 格式
-  2. 超时问题修复 ✅
-    - 问题：前端5分钟 < 云函数7200秒，导致前端先超时断开
-    - 解决：前端超时改为2小时，支持分步执行（links → process）
-  3. 进度显示功能 ✅
-    - 显示：进度/总数、已用时间、预计剩余时间
-    - 进度条、取消按钮
-  4. AI解析测试模式 ✅
-    - 新增 test-ai 模式：只处理前5篇，返回解析结果（不存储）
-    - 内容获取：静态网页用 httpGet（axios），kimifetch 保留备用
+---
 
-  ---
-  待测试：
-  1. 上传云函数 simpleFetch
-  2. 选"AI解析测试（5篇）"模式测试
+## 技术栈
 
-  ---
-  修改的文件：
-  - uniCloud-aliyun/cloudfunctions/simpleFetch/index.js
-  - pages/admin/simple-fetch.vue
+- 前端：uni-app (Vue3)
+- 后端：uniCloud (Node.js)
+- 数据库：MongoDB (阿里云)
+- AI：Moonshot Kimi API
