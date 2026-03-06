@@ -29,6 +29,51 @@ loadConfig();
 // ============ 工具函数 ============
 
 /**
+ * 从URL中提取sourceId
+ * 例如: https://www.scuec.edu.cn/bwc/tztg.htm → "bwc"
+ *       https://www.scuec.edu.cn/cxcy/scss/info.htm → "scss"
+ */
+function extractSourceIdFromUrl(url) {
+    try {
+        const urlObj = new URL(url);
+        const pathname = urlObj.pathname;
+
+        // 去掉末尾的文件名，获取目录路径
+        // 例如: /bwc/tztg.htm → /bwc/
+        // 例如: /cxcy/scss/info.htm → /cxcy/scss/
+        const dirPath = pathname.substring(0, pathname.lastIndexOf('/') + 1);
+
+        // 获取最后一个目录名
+        // 例如: /bwc/ → bwc
+        // 例如: /cxcy/scss/ → scss
+        const parts = dirPath.split('/').filter(p => p);
+        const sourceId = parts[parts.length - 1] || '';
+
+        return sourceId;
+    } catch (e) {
+        console.error('[parseArticles] 提取sourceId失败:', e.message);
+        return '';
+    }
+}
+
+/**
+ * 根据sourceId从sources表获取中文名称
+ */
+async function getSourceNameFromDb(sourceId) {
+    if (!sourceId) return null;
+
+    try {
+        const result = await db.collection('sources').where({ sourceId: sourceId }).get();
+        if (result.data && result.data.length > 0) {
+            return result.data[0].sourceName;
+        }
+    } catch (e) {
+        console.error('[parseArticles] 查询sources表失败:', e.message);
+    }
+    return null;
+}
+
+/**
  * HTTP GET 请求
  */
 async function httpGet(url) {
@@ -89,9 +134,35 @@ async function aiParse(content) {
 
 /**
  * 保存文章到 articles 集合
+ * @param {Object} item - AI解析结果
+ * @param {string} url - 文章URL
+ * @param {string} sourceIdFromQueue - 从链接池传入的sourceId（可选）
+ * @param {string} sourceNameFromQueue - 从链接池传入的sourceName（可选）
  */
-async function saveArticle(item, url, sourceId, sourceName) {
+async function saveArticle(item, url, sourceIdFromQueue, sourceNameFromQueue) {
     const now = Date.now();
+
+    // 自动从URL提取sourceId
+    const extractedSourceId = extractSourceIdFromUrl(url);
+    console.log('[parseArticles] 提取的sourceId:', extractedSourceId);
+
+    // 优先使用传入的sourceId，否则使用从URL提取的
+    const finalSourceId = sourceIdFromQueue || extractedSourceId;
+
+    // 尝试从数据库获取sourceName
+    let finalSourceName = sourceNameFromQueue;
+    if (!finalSourceName && finalSourceId) {
+        const dbSourceName = await getSourceNameFromDb(finalSourceId);
+        if (dbSourceName) {
+            finalSourceName = dbSourceName;
+            console.log('[parseArticles] 从数据库获取sourceName:', finalSourceName);
+        }
+    }
+
+    // 如果都没有，使用默认名称
+    if (!finalSourceName) {
+        finalSourceName = finalSourceId || '未知来源';
+    }
 
     // 检查是否已存在（通过 originalUrl 查重）
     const existing = await db.collection('articles').where({ originalUrl: url }).get();
@@ -108,13 +179,13 @@ async function saveArticle(item, url, sourceId, sourceName) {
         category: item.category || 'notice',
         categoryName: getCategoryName(item.category || 'notice'),
         tags: {
-            source: ['URL抓取'],
+            source: [finalSourceName],
             role: ['通用'],
-            custom: item.tags || []
+            custom: item.tags || []  // 保留AI返回的tags，但不在前端显示
         },
         urgency: item.urgency || 'low',
-        sourceId: sourceId || null,
-        sourceName: sourceName || 'URL抓取',
+        sourceId: finalSourceId,
+        sourceName: finalSourceName,
         originalUrl: url,
         publishTime: item.publishTime ? new Date(item.publishTime).getTime() : now,
         stats: { viewCount: 0, collectCount: 0, shareCount: 0 },

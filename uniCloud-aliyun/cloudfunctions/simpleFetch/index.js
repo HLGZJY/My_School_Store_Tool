@@ -29,6 +29,40 @@ loadConfig();
 
 // ============ 工具函数 ============
 
+/**
+ * 从URL中提取sourceId
+ * 例如: https://www.scuec.edu.cn/bwc/tztg.htm → "bwc"
+ */
+function extractSourceIdFromUrl(url) {
+    try {
+        const urlObj = new URL(url);
+        const pathname = urlObj.pathname;
+        const dirPath = pathname.substring(0, pathname.lastIndexOf('/') + 1);
+        const parts = dirPath.split('/').filter(p => p);
+        const sourceId = parts[parts.length - 1] || '';
+        return sourceId;
+    } catch (e) {
+        console.error('[simpleFetch] 提取sourceId失败:', e.message);
+        return '';
+    }
+}
+
+/**
+ * 根据sourceId从sources表获取中文名称
+ */
+async function getSourceNameFromDb(sourceId) {
+    if (!sourceId) return null;
+    try {
+        const result = await db.collection('sources').where({ sourceId: sourceId }).get();
+        if (result.data && result.data.length > 0) {
+            return result.data[0].sourceName;
+        }
+    } catch (e) {
+        console.error('[simpleFetch] 查询sources表失败:', e.message);
+    }
+    return null;
+}
+
 // HTTP 请求
 async function httpGet(url) {
     try {
@@ -110,15 +144,40 @@ async function saveArticle(item, url) {
     const existing = await db.collection('articles').where({ originalUrl: url }).get();
     if (existing.data.length > 0) return { exists: true };
 
+    // 从URL提取sourceId
+    const finalSourceId = extractSourceIdFromUrl(url);
+    console.log('[simpleFetch] 提取的sourceId:', finalSourceId);
+
+    // 尝试从数据库获取sourceName
+    let finalSourceName = null;
+    if (finalSourceId) {
+        const dbSourceName = await getSourceNameFromDb(finalSourceId);
+        if (dbSourceName) {
+            finalSourceName = dbSourceName;
+            console.log('[simpleFetch] 从数据库获取sourceName:', finalSourceName);
+        }
+    }
+
+    // 如果都没有，使用默认名称
+    if (!finalSourceName) {
+        finalSourceName = finalSourceId || '未知来源';
+    }
+
     await db.collection('articles').add({
         title: item.title || '无标题',
         content: item.content || '',
         plainText: item.content?.replace(/<[^>]+>/g, '') || '',
         summary: item.summary || '',
         category: item.category || 'notice',
-        tags: { source: ['URL抓取'], role: ['通用'], custom: item.tags || [] },
+        categoryName: getCategoryName(item.category || 'notice'),
+        tags: {
+            source: [finalSourceName],
+            role: ['通用'],
+            custom: item.tags || []  // 保留AI返回的tags，但不在前端显示
+        },
         urgency: item.urgency || 'low',
-        sourceId: null, sourceName: 'URL抓取',
+        sourceId: finalSourceId,
+        sourceName: finalSourceName,
         originalUrl: url,
         publishTime: item.publishTime ? new Date(item.publishTime).getTime() : now,
         stats: { viewCount: 0, collectCount: 0, shareCount: 0 },
@@ -127,6 +186,18 @@ async function saveArticle(item, url) {
         createTime: now, updateTime: now
     });
     return { exists: false };
+}
+
+// 分类名称映射
+function getCategoryName(category) {
+    const map = {
+        notice: '通知公告',
+        academic: '学术动态',
+        activity: '活动赛事',
+        service: '生活服务',
+        other: '其他'
+    };
+    return map[category] || '其他';
 }
 
 // ============ 核心功能 ============

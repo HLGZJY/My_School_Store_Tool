@@ -28,6 +28,41 @@ loadConfig();
 // ============ 工具函数 ============
 
 /**
+ * 从URL中提取sourceId
+ * 例如: https://www.scuec.edu.cn/bwc/tztg.htm → "bwc"
+ *       https://www.scuec.edu.cn/cxcy/scss/info.htm → "scss"
+ */
+function extractSourceIdFromUrl(url) {
+    try {
+        const urlObj = new URL(url);
+        const pathname = urlObj.pathname;
+        const dirPath = pathname.substring(0, pathname.lastIndexOf('/') + 1);
+        const parts = dirPath.split('/').filter(p => p);
+        const sourceId = parts[parts.length - 1] || '';
+        return sourceId;
+    } catch (e) {
+        console.error('[extractUrls] 提取sourceId失败:', e.message);
+        return '';
+    }
+}
+
+/**
+ * 根据sourceId从sources表获取中文名称
+ */
+async function getSourceNameFromDb(sourceId) {
+    if (!sourceId) return null;
+    try {
+        const result = await db.collection('sources').where({ sourceId: sourceId }).get();
+        if (result.data && result.data.length > 0) {
+            return result.data[0].sourceName;
+        }
+    } catch (e) {
+        console.error('[extractUrls] 查询sources表失败:', e.message);
+    }
+    return null;
+}
+
+/**
  * HTTP GET 请求
  */
 async function httpGet(url) {
@@ -266,8 +301,32 @@ exports.main = async (event, context) => {
             console.log(`[extractUrls] 预检验后剩余 ${links.length} 个有效链接`);
         }
 
-        // 3. 查重并存入链接池
-        const saveResult = await saveLinksToQueue(links, sourceUrl, sourceId, sourceName);
+        // 3. 自动处理sourceId和sourceName
+        let finalSourceId = sourceId;
+        let finalSourceName = sourceName;
+
+        // 如果没有传入sourceId，自动从URL提取
+        if (!finalSourceId) {
+            finalSourceId = extractSourceIdFromUrl(sourceUrl);
+            console.log('[extractUrls] 自动提取sourceId:', finalSourceId);
+        }
+
+        // 如果没有传入sourceName，尝试从数据库获取
+        if (!finalSourceName && finalSourceId) {
+            const dbSourceName = await getSourceNameFromDb(finalSourceId);
+            if (dbSourceName) {
+                finalSourceName = dbSourceName;
+                console.log('[extractUrls] 从数据库获取sourceName:', finalSourceName);
+            }
+        }
+
+        // 如果都没有，使用默认名称
+        if (!finalSourceName) {
+            finalSourceName = finalSourceId || '未知来源';
+        }
+
+        // 4. 查重并存入链接池
+        const saveResult = await saveLinksToQueue(links, sourceUrl, finalSourceId, finalSourceName);
 
         // 4. 统计待处理数量
         const pendingCount = await db.collection('url_queue').where({ status: 'pending' }).count();
