@@ -19,6 +19,27 @@
       <view class="title">链接提取</view>
       <view class="desc">从列表页提取链接并存入链接池</view>
 
+      <!-- 提取历史 -->
+      <view class="history-section" v-if="extractHistory.length > 0">
+        <view class="history-title">提取历史（链接池）</view>
+        <view
+          class="history-item"
+          v-for="(item, index) in extractHistory"
+          :key="index"
+          @click="selectHistoryUrl(item)"
+        >
+          <view class="history-info">
+            <text class="history-url">{{ item.sourceName || item.sourceId }} ({{ item.sourceUrl }})</text>
+            <text class="history-time">{{ item.time }}</text>
+          </view>
+          <view class="history-stats">
+            <text class="stat total">共 {{ item.totalCount }}</text>
+            <text class="stat pending">待处理 {{ item.pendingCount }}</text>
+            <text class="stat processed">已处理 {{ item.processedCount }}</text>
+          </view>
+        </view>
+      </view>
+
       <!-- 数据源选择 -->
       <view class="input-section">
         <view class="label">选择数据源（可选）</view>
@@ -75,41 +96,87 @@
     <!-- Tab 2: 文章解析 -->
     <view v-show="currentTab === 1" class="card">
       <view class="title">文章解析</view>
-      <view class="desc">从链接池获取链接并 AI 解析存入文章库</view>
+      <view class="desc">从链接池选择链接并 AI 解析存入文章库</view>
 
-      <!-- 来源筛选 -->
-      <view class="input-section">
-        <view class="label">选择数据源（筛选）</view>
-        <picker :range="sourceOptions" range-key="label" @change="onParseSourceChange">
-          <view class="picker-value">
-            {{ parseSourceId === '' ? '全部来源' : parseSourceName }}
-          </view>
-        </picker>
+      <!-- 刷新待处理链接列表 -->
+      <view class="btn-section" style="margin-bottom: 20rpx;">
+        <button @click="loadPendingLinks" :loading="loadingPending" size="mini" type="default">
+          刷新链接池
+        </button>
       </view>
 
-      <!-- 处理数量 -->
-      <view class="input-section">
-        <view class="label">每次处理数量</view>
-        <view class="limit-selector">
-          <view
-            v-for="l in [5, 10, 20, 50]"
-            :key="l"
-            :class="['limit-item', parseLimit === l ? 'active' : '']"
-            @click="parseLimit = l"
-          >{{ l }}</view>
+      <!-- 待处理链接列表（按主链接分组） -->
+      <view class="pending-section" v-if="pendingGroups.length > 0">
+        <view class="pending-title">待处理链接（点击展开选择）</view>
+
+        <view
+          v-for="(group, gIndex) in pendingGroups"
+          :key="gIndex"
+          class="pending-group"
+        >
+          <view class="group-header" @click="toggleGroup(gIndex)">
+            <view class="group-info">
+              <checkbox
+                :checked="isGroupAllSelected(gIndex)"
+                @click.stop="toggleGroupAll(gIndex)"
+              />
+              <text class="group-name">{{ group.sourceName || group.sourceId }}</text>
+              <text class="group-count">({{ group.totalCount }} 条)</text>
+            </view>
+            <text class="expand-icon">{{ expandedGroups.includes(gIndex) ? '▼' : '▶' }}</text>
+          </view>
+
+          <!-- 展开显示具体链接 -->
+          <view v-if="expandedGroups.includes(gIndex) && group.links" class="group-links">
+            <view
+              v-for="link in (group.links || [])"
+              :key="link._id"
+              :class="['link-item', isLinkSelected(gIndex, link._id) ? 'selected' : '']"
+              @click="toggleLinkSelection(gIndex, link._id)"
+            >
+              <view class="checkbox-wrapper">
+                <checkbox :checked="isLinkSelected(gIndex, link._id)" />
+              </view>
+              <text class="link-url">{{ link.url }}</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 已选统计 -->
+        <view class="selection-info" v-if="selectedLinkIds.length > 0">
+          <text>已选择: {{ selectedLinkIds.length }} 条链接</text>
+        </view>
+
+        <!-- 提示 -->
+        <view class="tip-info" v-if="pendingGroups.length > 0">
+          <text>提示：每次建议选择5-10条，处理过多可能超时</text>
+        </view>
+
+        <!-- 解析按钮 -->
+        <view class="btn-section">
+          <button
+            @click="handleParseSelected"
+            :loading="parseLoading"
+            :disabled="selectedLinkIds.length === 0"
+            type="primary"
+            class="action-btn"
+          >
+            {{ parseLoading ? '处理中...' : '解析选中链接 (' + selectedLinkIds.length + ')' }}
+          </button>
         </view>
       </view>
 
-      <!-- 解析按钮 -->
-      <view class="btn-section">
-        <button @click="handleParse" :loading="parseLoading" type="primary" class="action-btn">
-          开始解析
-        </button>
+      <!-- 空状态 -->
+      <view v-else class="empty-pending">
+        <text>暂无待处理链接，请先提取链接</text>
       </view>
 
       <!-- 解析进度 -->
       <view v-if="parseProgress" class="progress-section">
         <view class="progress-title">解析进度</view>
+        <view class="progress-info" v-if="parseProgress.filtered > 0">
+          <text class="filtered">过滤已存在：{{ parseProgress.filtered }} 篇</text>
+        </view>
         <view class="progress-info">
           <text>已处理：{{ parseProgress.processed }} 篇</text>
         </view>
@@ -165,10 +232,15 @@ export default {
       skipCheck: true,  // 默认跳过404检测，避免超时
       sourceList: [],
       selectedSource: null,
+      extractHistory: [],  // 提取历史记录
       // 解析相关
       parseLoading: false,
+      loadingPending: false,
       parseResult: null,
       parseProgress: null,
+      pendingGroups: [],  // 待处理链接分组
+      expandedGroups: [],  // 展开的分组
+      selectedLinks: {},   // 选中的链接 { groupIndex: [linkId1, linkId2, ...] }
       parseSourceId: '',
       parseSourceName: '',
       parseLimit: 10
@@ -181,11 +253,30 @@ export default {
         { label: '全部来源', value: '' },
         ...this.sourceList.map(s => ({ label: s.sourceName, value: s._id }))
       ]
+    },
+    selectedLinkIds() {
+      const ids = []
+      for (const gIndex in this.selectedLinks) {
+        const selected = this.selectedLinks[gIndex]
+        if (selected && selected.length > 0) {
+          ids.push(...selected)
+        }
+      }
+      return ids
     }
   },
 
   onLoad() {
     this.loadSources()
+    this.loadExtractHistory()
+  },
+
+  onShow() {
+    if (this.currentTab === 0) {
+      this.loadExtractHistory()
+    } else if (this.currentTab === 1) {
+      this.loadPendingLinks()
+    }
   },
 
   methods: {
@@ -209,15 +300,195 @@ export default {
       }
     },
 
+    // 加载提取历史（从 url_queue）
+    async loadExtractHistory() {
+      try {
+        const res = await uniCloud.callFunction({
+          name: 'extractUrls',
+          data: { action: 'getHistory' }
+        })
+        if (res.result.code === 0) {
+          // 格式化时间
+          this.extractHistory = (res.result.data || []).map(item => ({
+            ...item,
+            time: this.formatTime(item.lastFetchTime),
+            totalCount: item.totalCount,
+            processedCount: item.processedCount,
+            pendingCount: item.pendingCount,
+            failedCount: item.failedCount
+          }))
+        }
+      } catch (e) {
+        console.error('加载提取历史失败:', e)
+      }
+    },
+
+    // 格式化时间
+    formatTime(timestamp) {
+      if (!timestamp) return ''
+      const date = new Date(timestamp)
+      return `${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`
+    },
+
+    // 加载待处理链接列表
+    async loadPendingLinks() {
+      this.loadingPending = true
+      try {
+        const res = await uniCloud.callFunction({
+          name: 'parseArticles',
+          data: { action: 'getPendingList' }
+        })
+        if (res.result.code === 0) {
+          this.pendingGroups = res.result.data || []
+          // 默认展开第一个分组
+          if (this.pendingGroups.length > 0 && this.expandedGroups.length === 0) {
+            this.expandedGroups = [0]
+          }
+        }
+      } catch (e) {
+        console.error('加载待处理链接失败:', e)
+      }
+      this.loadingPending = false
+    },
+
+    // 切换分组展开
+    toggleGroup(gIndex) {
+      const idx = this.expandedGroups.indexOf(gIndex)
+      if (idx > -1) {
+        this.expandedGroups.splice(idx, 1)
+      } else {
+        this.expandedGroups.push(gIndex)
+      }
+    },
+
+    // 检查分组是否全选
+    isGroupAllSelected(gIndex) {
+      const group = this.pendingGroups[gIndex]
+      if (!group || !group.links) return false
+      const selected = this.selectedLinks[gIndex] || []
+      return group.links.length > 0 && group.links.every(l => selected.includes(l._id))
+    },
+
+    // 切换分组全选
+    toggleGroupAll(gIndex) {
+      const group = this.pendingGroups[gIndex]
+      if (!group || !group.links) return
+
+      if (!this.selectedLinks[gIndex]) {
+        this.$set(this.selectedLinks, gIndex, [])
+      }
+
+      const selected = this.selectedLinks[gIndex]
+      const allSelected = group.links.every(l => selected.includes(l._id))
+
+      if (allSelected) {
+        // 取消全选
+        this.selectedLinks[gIndex] = []
+      } else {
+        // 全选
+        this.selectedLinks[gIndex] = group.links.map(l => l._id)
+      }
+    },
+
+    // 检查链接是否选中
+    isLinkSelected(gIndex, linkId) {
+      const selected = this.selectedLinks[gIndex] || []
+      return selected.includes(linkId)
+    },
+
+    // 切换链接选中状态
+    toggleLinkSelection(gIndex, linkId) {
+      if (!this.selectedLinks[gIndex]) {
+        this.$set(this.selectedLinks, gIndex, [])
+      }
+
+      const selected = this.selectedLinks[gIndex]
+      const idx = selected.indexOf(linkId)
+
+      if (idx > -1) {
+        selected.splice(idx, 1)
+      } else {
+        selected.push(linkId)
+      }
+    },
+
+    // 获取选中的链接ID列表
+    // 解析选中的链接
+    async handleParseSelected() {
+      const linkIds = this.selectedLinkIds
+      if (linkIds.length === 0) {
+        uni.showToast({ title: '请选择要解析的链接', icon: 'none' })
+        return
+      }
+
+      this.parseLoading = true
+      this.parseResult = null
+      this.parseProgress = null
+
+      try {
+        const res = await uniCloud.callFunction({
+          name: 'parseArticles',
+          data: {
+            linkIds: linkIds,
+            openid: uni.getStorageSync('openid')
+          },
+          timeout: 7200000
+        })
+
+        console.log('[parseArticles] 响应:', res.result)
+
+        if (res.result.code === 0) {
+          this.parseResult = res.result.data
+          this.parseProgress = {
+            processed: res.result.data.processed,
+            success: res.result.data.success,
+            failed: res.result.data.failed,
+            remainingCount: res.result.data.remainingCount
+          }
+          // 解析完成后刷新列表
+          this.loadPendingLinks()
+          // 清空选择
+          this.selectedLinks = {}
+          this.expandedGroups = []
+          uni.showToast({
+            title: res.result.data.message || '解析完成',
+            icon: 'success'
+          })
+        } else {
+          uni.showToast({
+            title: res.result.message || '解析失败',
+            icon: 'none'
+          })
+        }
+      } catch (e) {
+        console.error('[parseArticles] 错误:', e)
+        uni.showToast({
+          title: '解析失败: ' + e.message,
+          icon: 'none'
+        })
+      }
+
+      this.parseLoading = false
+    },
+
     // 选择数据源
     onSourceChange(e) {
       const index = e.detail.value
       if (index > 0) {
         this.selectedSource = this.sourceList[index - 1]
-        this.extractUrl = this.selectedSource.url || ''
+        this.extractUrl = this.selectedSource.config?.url || this.selectedSource.url || ''
       } else {
         this.selectedSource = null
       }
+    },
+
+    // 选择历史中的 URL
+    selectHistoryUrl(item) {
+      this.extractUrl = item.sourceUrl
+      uni.showToast({
+        title: '已选择: ' + (item.sourceName || item.sourceId),
+        icon: 'none'
+      })
     },
 
     // 解析页面选择数据源
@@ -265,6 +536,10 @@ export default {
 
         if (res.result.code === 0) {
           this.extractResult = res.result.data
+          // 重新加载历史记录（从 url_queue 获取）
+          this.loadExtractHistory()
+          // 重新加载数据源列表
+          this.loadSources()
           uni.showToast({
             title: res.result.data.message || '提取完成',
             icon: 'success'
@@ -417,6 +692,76 @@ export default {
   background: #fff;
 }
 
+.history-section {
+  margin-bottom: 30rpx;
+  padding: 20rpx;
+  background: #f9f9f9;
+  border-radius: 8rpx;
+}
+
+.history-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.history-item {
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #eee;
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8rpx;
+}
+
+.history-url {
+  font-size: 24rpx;
+  color: #333;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-time {
+  font-size: 22rpx;
+  color: #999;
+  margin-left: 16rpx;
+}
+
+.history-stats {
+  display: flex;
+  gap: 12rpx;
+}
+
+.history-stats .stat {
+  font-size: 20rpx;
+  padding: 2rpx 6rpx;
+  border-radius: 4rpx;
+}
+
+.history-stats .stat.total {
+  background: #F5F5F5;
+  color: #666;
+}
+
+.history-stats .stat.pending {
+  background: #FFF3E0;
+  color: #FF9500;
+}
+
+.history-stats .stat.processed {
+  background: #E8F5E9;
+  color: #07C160;
+}
+
 .option-section {
   margin-bottom: 30rpx;
 }
@@ -514,6 +859,11 @@ export default {
   margin-bottom: 8rpx;
 }
 
+.progress-info .filtered {
+  color: #007AFF;
+  font-weight: bold;
+}
+
 .result-list {
   margin-top: 20rpx;
 }
@@ -564,5 +914,111 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 待处理链接列表样式 */
+.pending-section {
+  margin-bottom: 30rpx;
+}
+
+.pending-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.pending-group {
+  border: 1rpx solid #eee;
+  border-radius: 8rpx;
+  margin-bottom: 16rpx;
+  overflow: hidden;
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx;
+  background: #f9f9f9;
+}
+
+.group-info {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.group-name {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.group-count {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.expand-icon {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.group-links {
+  max-height: 400rpx;
+  overflow-y: auto;
+}
+
+.link-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 16rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.link-item.selected {
+  background: #E3F2FD;
+}
+
+.checkbox-wrapper {
+  flex-shrink: 0;
+}
+
+.link-url {
+  font-size: 22rpx;
+  color: #666;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selection-info {
+  padding: 16rpx;
+  background: #E3F2FD;
+  border-radius: 8rpx;
+  margin-bottom: 16rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: #007AFF;
+}
+
+.empty-pending {
+  text-align: center;
+  padding: 60rpx 20rpx;
+  color: #999;
+  font-size: 28rpx;
+}
+
+.tip-info {
+  text-align: center;
+  padding: 16rpx;
+  color: #FF9500;
+  font-size: 24rpx;
+  background: #FFF3E0;
+  border-radius: 8rpx;
+  margin-bottom: 16rpx;
 }
 </style>

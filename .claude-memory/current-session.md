@@ -1,110 +1,83 @@
- # 会话状态 2026-03-06 - 数据源管理与链接池优化
+# 会话状态 2026-03-07 - 链接池管理优化
 
-  ## 项目背景
+   ## 项目背景
 
-  校园信息发布工具小程序（uni-app + uniCloud + MongoDB）
+   校园信息发布工具小程序（uni-app + uniCloud + MongoDB）
 
-  ---
+   ---
 
-  ## 本次会话完成的工作
+   ## 本次会话完成的工作
 
-  ### 1. 删除 fetchUrl 云函数
+   ### 1. 权限问题修复
+   - 修复了数据源智能分析的权限问题（analyze action
+   不需要验证登录）
 
-  将原有 fetchUrl 云函数删除，由 extractUrls 和 parseArticles
-  替代：
-  - 删除 fetchUrl 云函数目录
-  - 删除 url-fetch.vue 页面
-  - 移除 dashboard.vue 中的手动采集和URL抓取菜单
+   ### 2. AI解析提示词优化
+   - 改进了 AI 解析的时间提取提示词，增加了详细的时间提取指导
+   - 强调使用 YYYY-MM-DD 格式
 
-  ### 2. 文章存储逻辑优化
+   ### 3. 提取历史展示（与 url_queue 联动）
+   - 新增 `getHistory` action，从 url_queue 按 sourceUrl
+   分组统计
+   - 前端页面 Tab1 显示提取历史（链接池状态）
+   - 点击历史可快速选择 URL
 
-  修改了 3 个云函数的文章存储逻辑：
+   ### 4. 数据源联动
+   - 提取链接成功后自动创建/更新 sources 表
+   - 统计文章数量、更新时间等
 
-  | 云函数 | 修改内容 |
-  |--------|----------|
-  | parseArticles | 添加 extractSourceIdFromUrl
-  从URL提取sourceId；添加 getSourceNameFromDb 从sources表获取中文
-   |
-  | extractUrls |
-  同上，自动处理未选择数据源时的sourceId和sourceName |
-  | simpleFetch | 同上，添加categoryName完整映射 |
+   ### 5. AI处理页面改造
+   - 新增 `getPendingList` action，按 sourceUrl
+   分组返回待处理链接
+   - 支持按链接ID列表处理
+   - 前端页面 Tab2 改造：
+     - 显示所有待处理链接（按主链接分组）
+     - 支持展开/折叠每个分组
+     - 支持全选/单选具体链接
+     - 批量解析选中的链接
 
-  **字段处理逻辑：**
-  - sourceId：从URL路径自动提取（如 /bwc/tztg.htm → bwc）
-  - sourceName：优先使用传入值 → 数据库查询 → 默认值
-  - categoryName：完整映射（notice→通知公告, academic→学术动态等）
-  - tags.source：更新为实际来源中文名
+   ### 6. 修复问题
+   - 修复了404检测问题（改用 GET 请求）
+   - 修复了 parseArticles 云函数语法错误
+   - 修复了前端渲染报错（添加空值检查）
+   - 添加了超时提示（建议每次选择5-10条）
 
-  ### 3. 数据源管理和链接池优化（主要工作）
+   ---
 
-  #### 3.1 Schema 统一
-  - **sources.schema.json**：新增字段 category, config, schedule,
-  defaultTags, stats
-  - **url_queue.schema.json**：新增 category 字段
+   ## 修改的文件
 
-  #### 3.2 智能分析功能
-  - **manageSources 云函数**：新增 analyze action
-    - extractCategoryFromUrl() - 从URL提取分类标识
-    - fetchPageTitle() - 获取网页标题作为 sourceName
-    - inferSourceNameFromDomain() - 从域名推断来源名称
+   | 文件 | 修改内容 |
+   |------|----------|
+   | uniCloud-aliyun/cloudfunctions/manageSources/index.js |
+   修复权限问题 |
+   | uniCloud-aliyun/cloudfunctions/extractUrls/index.js | 新增
+   getHistory action，修复404检测，数据源联动 |
+   | uniCloud-aliyun/cloudfunctions/parseArticles/index.js |
+   优化提示词，新增 getPendingList，支持 linkIds 处理 |
+   | pages/admin/simple-fetch.vue |
+   提取历史展示，AI处理批量选择UI |
 
-  #### 3.3 前端改造
-  - **sources.vue**：
-    - 添加"智能分析"按钮
-    - 自动填充 sourceId/sourceName/category 供管理员修改
-    - URL 失去焦点时自动分析
-    - 支持新的 sourceId/sourceName/sourceType 字段
+   ---
 
-  ---
+   ## 待优化
 
-  ## 修改的文件
+   - 云函数超时问题：需要在 uniCloud 控制台调整超时时间
+   - 建议每次处理5-10条链接，避免超时
 
-  | 文件 | 修改内容 |
-  |------|----------|
-  | pages/admin/dashboard.vue | 删除 fetchUrl 相关代码 |
-  | pages/admin/sources.vue | 全面改造，支持智能分析和新字段 |
-  | uniCloud-aliyun/cloudfunctions/manageSources/index.js | 新增
-  analyze action，改造字段 |
-  | uniCloud-aliyun/cloudfunctions/manageSources/package.json |
-  添加 axios 依赖 |
-  | uniCloud-aliyun/cloudfunctions/extractUrls/index.js | 写入
-  category 字段 |
-  | uniCloud-aliyun/cloudfunctions/parseArticles/index.js | 优化
-  sourceId/sourceName 逻辑 |
-  | uniCloud-aliyun/cloudfunctions/simpleFetch/index.js | 优化
-  sourceId/sourceName 逻辑 |
-  | uniCloud-aliyun/database/schemas/sources.schema.json |
-  统一字段定义 |
-  | uniCloud-aliyun/database/schemas/url_queue.schema.json | 新增
-  category 字段 |
+   ---
 
-  ---
+   ## Git 提交记录
 
-  ## 待完成功能
+   | Commit | 描述 |
+   |--------|------|
+   | 30d6b6a | feat: 链接池管理优化 -
+   提取历史、数据源联动、批量选择 |
 
-  ### 定时检查功能（Phase 4）
-  - 创建 checkSourceUpdates 云函数
-  - 定时检测数据源更新
-  - 自动将新链接存入链接池
-  - 支持手动触发
+   ---
 
-  ---
+   ## 技术栈
 
-  ## Git 提交记录
-
-  | Commit | 描述 |
-  |--------|------|
-  | 4e6ec42 | refactor:
-  删除fetchUrl云函数，由extractUrls和parseArticles替代 |
-  | 3c10e1f | feat: 优化文章存储逻辑 - 自动提取sourceId和sourceName
-   |
-  | e4ab774 | feat: 数据源管理和链接池优化 |
-
-  ---
-
-  ## 技术栈
-
-  - 前端：uni-app (Vue3)
-  - 后端：uniCloud (Node.js)
-  - 数据库：MongoDB (阿里云)
-  - AI：Moonshot Kimi API
+   - 前端：uni-app (Vue3)
+   - 后端：uniCloud (Node.js)
+   - 数据库：MongoDB (阿里云)
+   - AI：Moonshot Kimi AP

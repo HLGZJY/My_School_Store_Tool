@@ -81,11 +81,16 @@ async function httpGet(url) {
 }
 
 /**
- * 快速检测URL是否存在（HEAD请求）
+ * 快速检测URL是否存在（使用GET请求）
  */
 async function checkUrlExists(url) {
     try {
-        const res = await axios.head(url, { timeout: 5000, headers: { 'User-Agent': 'Mozilla/5.0' } });
+        const res = await axios.get(url, {
+            timeout: 10000,
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+            maxContentLength: 5000,  // 只获取前5KB
+            maxBodyLength: 5000
+        });
         return res.status === 200;
     } catch (e) {
         return e.response?.status === 200;
@@ -279,8 +284,54 @@ async function filterValidLinks(links) {
 // ============ 主入口 ============
 
 exports.main = async (event, context) => {
-    const { sourceUrl, sourceId, sourceName, maxPages = 10, skipCheck = false, openid } = event;
+    const { action, sourceUrl, sourceId, sourceName, maxPages = 10, skipCheck = false, openid } = event;
 
+    // 获取提取历史（不需要登录）
+    if (action === 'getHistory') {
+        try {
+            // 按 sourceUrl 分组统计
+            const history = await db.collection('url_queue')
+                .field({ sourceUrl: true, sourceId: true, sourceName: true, category: true, status: true, fetchTime: true })
+                .get();
+
+            // 按 sourceUrl 分组
+            const groupMap = new Map();
+            for (const item of history.data) {
+                const key = item.sourceUrl;
+                if (!groupMap.has(key)) {
+                    groupMap.set(key, {
+                        sourceUrl: item.sourceUrl,
+                        sourceId: item.sourceId,
+                        sourceName: item.sourceName,
+                        category: item.category,
+                        totalCount: 0,
+                        processedCount: 0,
+                        pendingCount: 0,
+                        failedCount: 0,
+                        lastFetchTime: item.fetchTime
+                    });
+                }
+                const group = groupMap.get(key);
+                group.totalCount++;
+                if (item.status === 'processed') group.processedCount++;
+                else if (item.status === 'pending') group.pendingCount++;
+                else if (item.status === 'failed') group.failedCount++;
+                if (item.fetchTime > group.lastFetchTime) {
+                    group.lastFetchTime = item.fetchTime;
+                }
+            }
+
+            return {
+                code: 0,
+                data: Array.from(groupMap.values())
+            };
+        } catch (e) {
+            console.error('[extractUrls] 获取历史失败:', e);
+            return { code: 500, message: e.message };
+        }
+    }
+
+    // 其他 action 需要 sourceUrl
     if (!sourceUrl) return { code: 400, message: 'sourceUrl 不能为空' };
     if (!openid) return { code: 401, message: '未登录' };
 
@@ -332,7 +383,59 @@ exports.main = async (event, context) => {
         // 4. 查重并存入链接池
         const saveResult = await saveLinksToQueue(links, sourceUrl, finalSourceId, finalSourceName);
 
-        // 4. 统计待处理数量
+        // 5. 自动创建/更新数据源
+        try {
+            const now = Date.now();
+            const existingSource = await db.collection('sources').where({ sourceId: finalSourceId }).get();
+
+            if (existingSource.data.length > 0) {
+                // 更新已有数据源
+                await db.collection('sources').doc(existingSource.data[0]._id).update({
+                    'config.url': sourceUrl,
+                    'stats.totalArticles': (existingSource.data[0].stats?.totalArticles || 0) + saveResult.newCount,
+                    'stats.lastFetchCount': saveResult.newCount,
+                    'stats.lastCheckTime': now,
+                    'stats.hasUpdates': saveResult.newCount > 0,
+                    updateTime: now
+                });
+                console.log('[extractUrls] 更新数据源:', finalSourceId);
+            } else {
+                // 创建新数据源
+                await db.collection('sources').add({
+                    sourceId: finalSourceId,
+                    sourceName: finalSourceName,
+                    sourceType: 'website',
+                    category: finalSourceId,
+                    enabled: true,
+                    config: { url: sourceUrl },
+                    schedule: {
+                        interval: 3600000,
+                        lastRunTime: now,
+                        nextRunTime: null,
+                        autoSync: false
+                    },
+                    defaultTags: {
+                        source: [finalSourceName],
+                        role: ['通用'],
+                        custom: []
+                    },
+                    stats: {
+                        totalArticles: saveResult.newCount,
+                        lastFetchCount: saveResult.newCount,
+                        lastCheckTime: now,
+                        hasUpdates: saveResult.newCount > 0
+                    },
+                    createTime: now,
+                    updateTime: now
+                });
+                console.log('[extractUrls] 创建数据源:', finalSourceId, finalSourceName);
+            }
+        } catch (e) {
+            console.error('[extractUrls] 自动创建数据源失败:', e.message);
+            // 不影响主流程
+        }
+
+        // 6. 统计待处理数量
         const pendingCount = await db.collection('url_queue').where({ status: 'pending' }).count();
 
         return {

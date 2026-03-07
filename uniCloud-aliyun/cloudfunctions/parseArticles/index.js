@@ -97,9 +97,45 @@ async function httpGet(url) {
 async function aiParse(content) {
     if (!MOONSHOT_API_KEY) return { success: false, error: 'API Key 未配置' };
 
+    // 提取发布时间的关键字段
+    const timePatterns = [
+        '发布时间',
+        '发布日期',
+        '发布于',
+        '日期',
+        'time',
+        'datetime',
+        'createTime',
+        'pubDate'
+    ];
+
     const prompt = `分析网页内容，提取校园通知信息。
-内容：${content.substring(0, 8000)}
-返回JSON：{"title":"标题","publishTime":"YYYY-MM-DD","content":"正文","summary":"摘要","category":"notice|academic|activity|service|other","tags":[],"urgency":"high|medium|low","isValid":true}`;
+
+重要任务：必须从网页HTML中准确提取"发布时间"。
+
+时间提取技巧：
+1. 查找HTML中的以下模式：
+   - <span class="time">2024-01-15</span>
+   - <div class="date">2024年1月15日</div>
+   - <p>发布时间：2024-01-15</p>
+   - <meta name="pubdate" content="2024-01-15">
+   - 日期可能在标题下方、页面底部或侧边栏
+2. 常见日期格式：YYYY-MM-DD、YYYY年MM月DD日、MM/DD/YYYY
+3. 如果找不到具体时间，使用今天的日期
+
+内容片段：${content.substring(0, 10000)}
+
+返回JSON格式：
+{
+  "title": "文章标题",
+  "publishTime": "YYYY-MM-DD（必须使用这个格式，如2024-01-15）",
+  "content": "正文内容",
+  "summary": "摘要",
+  "category": "notice|academic|activity|service|other",
+  "tags": ["标签1", "标签2"],
+  "urgency": "high|medium|low",
+  "isValid": true
+}`;
 
     try {
         const res = await axios.post(
@@ -214,12 +250,144 @@ function getCategoryName(category) {
 // ============ 主入口 ============
 
 exports.main = async (event, context) => {
-    const { sourceId, limit = 10, startIndex = 0, openid } = event;
+    const { action, sourceId, limit = 10, startIndex = 0, openid, linkIds } = event;
+
+    // 获取待处理链接列表（按 sourceUrl 分组）
+    if (action === 'getPendingList') {
+        try {
+            // 查询所有 pending 链接
+            const allPending = await db.collection('url_queue')
+                .where({ status: 'pending' })
+                .get();
+
+            // 按 sourceUrl 分组
+            const groupMap = new Map();
+            for (const item of allPending.data) {
+                const key = item.sourceUrl;
+                if (!groupMap.has(key)) {
+                    groupMap.set(key, {
+                        sourceUrl: item.sourceUrl,
+                        sourceId: item.sourceId,
+                        sourceName: item.sourceName,
+                        category: item.category,
+                        links: []
+                    });
+                }
+                groupMap.get(key).links.push({
+                    _id: item._id,
+                    url: item.url,
+                    fetchTime: item.fetchTime
+                });
+            }
+
+            return {
+                code: 0,
+                data: Array.from(groupMap.values()).map(g => ({
+                    ...g,
+                    totalCount: g.links.length
+                }))
+            };
+        } catch (e) {
+            console.error('[parseArticles] 获取待处理列表失败:', e);
+            return { code: 500, message: e.message };
+        }
+    }
 
     if (!openid) return { code: 401, message: '未登录' };
 
+    // 如果传入了 linkIds，则只处理指定的链接
+    if (linkIds && linkIds.length > 0) {
+        try {
+            const results = [];
+            let successCount = 0;
+            let failedCount = 0;
+            const now = Date.now();
+
+            for (const linkId of linkIds) {
+                // 获取链接信息
+                const linkInfo = await db.collection('url_queue').doc(linkId).get();
+                if (!linkInfo.data.length) {
+                    continue;
+                }
+                const item = linkInfo.data[0];
+
+                // 更新状态为处理中
+                await db.collection('url_queue').doc(item._id).update({
+                    status: 'processing',
+                    updateTime: now
+                });
+
+                // 获取HTML
+                const httpRes = await httpGet(item.url);
+                if (!httpRes.success) {
+                    await db.collection('url_queue').doc(item._id).update({
+                        status: 'failed',
+                        error: httpRes.error,
+                        updateTime: now
+                    });
+                    results.push({ url: item.url, status: 'fetch_failed', error: httpRes.error });
+                    failedCount++;
+                    continue;
+                }
+
+                // AI解析
+                const aiRes = await aiParse(httpRes.content);
+                if (!aiRes.success) {
+                    await db.collection('url_queue').doc(item._id).update({
+                        status: 'failed',
+                        error: aiRes.error,
+                        retryCount: (item.retryCount || 0) + 1,
+                        updateTime: now
+                    });
+                    results.push({ url: item.url, status: 'parse_failed', error: aiRes.error });
+                    failedCount++;
+                    continue;
+                }
+
+                // 保存文章
+                const saveRes = await saveArticle(aiRes.data, item.url, item.sourceId, item.sourceName);
+
+                // 更新链接状态
+                await db.collection('url_queue').doc(item._id).update({
+                    status: 'processed',
+                    processTime: now,
+                    articleId: saveRes.articleId,
+                    updateTime: now
+                });
+
+                results.push({
+                    url: item.url,
+                    status: saveRes.exists ? 'exists' : 'saved',
+                    title: aiRes.data?.title,
+                    articleId: saveRes.articleId
+                });
+
+                if (!saveRes.exists) successCount++;
+            }
+
+            const remainingCount = await db.collection('url_queue').where({ status: 'pending' }).count();
+
+            return {
+                code: 0,
+                data: {
+                    mode: 'parse',
+                    processed: linkIds.length,
+                    success: successCount,
+                    failed: failedCount,
+                    results,
+                    remainingCount: remainingCount.total,
+                    message: `处理完成：成功 ${successCount} 个，失败 ${failedCount} 个`
+                }
+            };
+        } catch (e) {
+            console.error('[parseArticles] 错误:', e);
+            return { code: 500, message: e.message };
+        }
+    }
+
+    // 原有逻辑：获取待处理链接并处理
     try {
-        // 1. 获取待处理链接
+    // 1. 获取待处理链接
         let query = db.collection('url_queue').where({ status: 'pending' });
         if (sourceId) {
             query = db.collection('url_queue').where({
@@ -228,10 +396,39 @@ exports.main = async (event, context) => {
             });
         }
 
-        const queueResult = await query.skip(startIndex).limit(limit).get();
-        const pendingLinks = queueResult.data || [];
+        const queueResult = await query.skip(startIndex).limit(limit * 2).get();  // 多查询一些用于过滤
+        let pendingLinks = queueResult.data || [];
+
+        // 预检查：过滤掉已在 articles 表中存在的链接
+        const filteredLinks = [];
+        const existingUrls = new Set();
+
+        for (const link of pendingLinks) {
+            const existing = await db.collection('articles').where({ originalUrl: link.url }).get();
+            if (existing.data.length > 0) {
+                // 已存在，直接标记为 processed
+                await db.collection('url_queue').doc(link._id).update({
+                    status: 'processed',
+                    articleId: existing.data[0]._id,
+                    processTime: Date.now(),
+                    updateTime: Date.now()
+                });
+                existingUrls.add(link.url);
+                console.log(`[parseArticles] 跳过已存在链接: ${link.url}`);
+            } else {
+                filteredLinks.push(link);
+            }
+        }
+
+        // 只保留真正需要处理的链接
+        pendingLinks = filteredLinks.slice(0, limit);
+
+        if (existingUrls.size > 0) {
+            console.log(`[parseArticles] 过滤掉 ${existingUrls.size} 个已存在链接`);
+        }
 
         if (pendingLinks.length === 0) {
+            const filteredCount = existingUrls ? existingUrls.size : 0;
             return {
                 code: 0,
                 data: {
@@ -239,7 +436,10 @@ exports.main = async (event, context) => {
                     processed: 0,
                     success: 0,
                     failed: 0,
-                    message: '没有待处理的链接'
+                    filtered: filteredCount,
+                    message: filteredCount > 0
+                        ? `过滤掉 ${filteredCount} 个已存在链接，没有新链接需要处理`
+                        : '没有待处理的链接'
                 }
             };
         }
@@ -314,6 +514,9 @@ exports.main = async (event, context) => {
         const remainingQuery = db.collection('url_queue').where({ status: 'pending' });
         const remainingCount = await remainingQuery.count();
 
+        // 计算过滤掉的已存在链接数
+        const filteredCount = existingUrls ? existingUrls.size : 0;
+
         return {
             code: 0,
             data: {
@@ -321,9 +524,12 @@ exports.main = async (event, context) => {
                 processed: pendingLinks.length,
                 success: successCount,
                 failed: failedCount,
+                filtered: filteredCount,  // 过滤掉的已存在链接数
                 results,
                 remainingCount: remainingCount.total,
-                message: `处理完成：成功 ${successCount} 个，失败 ${failedCount} 个，剩余 ${remainingCount.total} 个待处理`
+                message: filteredCount > 0
+                    ? `过滤已存在 ${filteredCount} 个，处理成功 ${successCount} 个，失败 ${failedCount} 个`
+                    : `处理完成：成功 ${successCount} 个，失败 ${failedCount} 个，剩余 ${remainingCount.total} 个待处理`
             }
         };
     } catch (e) {

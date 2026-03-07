@@ -171,40 +171,37 @@ exports.main = async (event, context) => {
     const { action, ...data } = event;
 
     try {
-        if (!openid) {
-            return { code: 401, message: '未登录' };
-        }
-
-        // analyze 不需要验证管理员权限
-        if (action !== 'analyze') {
-            await verifyAdmin(openid);
-        }
-
-        switch (action) {
-            case 'analyze': {
-                // 智能分析URL，返回建议数据（不保存）
-                const { url } = data;
-
-                const result = await analyzeUrl(url);
-
-                if (!result.success) {
-                    return { code: 400, message: result.error };
-                }
-
-                return {
-                    code: 0,
-                    data: result.data
-                };
-            }
-
-            case 'list': {
+        // analyze 和 list 不需要验证权限，直接处理
+        if (action === 'analyze' || action === 'list') {
+            if (action === 'list') {
                 const sources = await db.collection('sources').get();
                 return {
                     code: 0,
                     data: sources.data || []
                 };
             }
+            // analyze action
+            const { url } = data;
+            const result = await analyzeUrl(url);
 
+            if (!result.success) {
+                return { code: 400, message: result.error };
+            }
+
+            return {
+                code: 0,
+                data: result.data
+            };
+        }
+
+        // 其他 action 需要验证登录和权限
+        if (!openid) {
+            return { code: 401, message: '未登录' };
+        }
+
+        await verifyAdmin(openid);
+
+        switch (action) {
             case 'create': {
                 const {
                     sourceId,
