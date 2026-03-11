@@ -331,6 +331,108 @@ exports.main = async (event, context) => {
         }
     }
 
+    // ============ 链接池管理功能 ============
+
+    // 获取所有链接（分页）
+    if (action === 'getAllLinks') {
+        const { page = 1, pageSize = 50, status, sourceUrl } = event;
+        try {
+            let query = db.collection('url_queue');
+
+            // 按状态筛选
+            if (status) {
+                query = query.where({ status: status });
+            }
+
+            // 按 sourceUrl 筛选
+            if (sourceUrl) {
+                query = query.where({ sourceUrl: sourceUrl });
+            }
+
+            const skip = (page - 1) * pageSize;
+            const links = await query.orderBy('fetchTime', 'desc').skip(skip).limit(pageSize).get();
+            const total = await query.count();
+
+            // 检测异常长度的链接（正常文章链接应该小于200字符）
+            const abnormalLinks = links.data.map(link => ({
+                ...link,
+                isAbnormal: link.url && (link.url.length < 10 || link.url.length > 200)
+            }));
+
+            return {
+                code: 0,
+                data: {
+                    list: abnormalLinks,
+                    total: total.total,
+                    page: page,
+                    pageSize: pageSize
+                }
+            };
+        } catch (e) {
+            console.error('[extractUrls] 获取链接列表失败:', e);
+            return { code: 500, message: e.message };
+        }
+    }
+
+    // 删除链接
+    if (action === 'deleteLink') {
+        const { linkId } = event;
+        if (!linkId) {
+            return { code: 400, message: 'linkId 不能为空' };
+        }
+
+        try {
+            await db.collection('url_queue').doc(linkId).delete();
+            return { code: 0, message: '删除成功' };
+        } catch (e) {
+            console.error('[extractUrls] 删除链接失败:', e);
+            return { code: 500, message: e.message };
+        }
+    }
+
+    // 批量删除链接
+    if (action === 'deleteLinks') {
+        const { linkIds } = event;
+        if (!linkIds || linkIds.length === 0) {
+            return { code: 400, message: 'linkIds 不能为空' };
+        }
+
+        try {
+            for (const linkId of linkIds) {
+                await db.collection('url_queue').doc(linkId).delete();
+            }
+            return { code: 0, message: `成功删除 ${linkIds.length} 个链接` };
+        } catch (e) {
+            console.error('[extractUrls] 批量删除链接失败:', e);
+            return { code: 500, message: e.message };
+        }
+    }
+
+    // 更新链接
+    if (action === 'updateLink') {
+        const { linkId, newUrl } = event;
+        if (!linkId) {
+            return { code: 400, message: 'linkId 不能为空' };
+        }
+        if (!newUrl) {
+            return { code: 400, message: 'newUrl 不能为空' };
+        }
+
+        try {
+            // 重置状态为 pending，允许重新解析
+            await db.collection('url_queue').doc(linkId).update({
+                url: newUrl,
+                status: 'pending',
+                error: db.command.remove(),
+                updateTime: Date.now()
+            });
+            return { code: 0, message: '更新成功' };
+        } catch (e) {
+            console.error('[extractUrls] 更新链接失败:', e);
+            return { code: 500, message: e.message };
+        }
+    }
+
     // 其他 action 需要 sourceUrl
     if (!sourceUrl) return { code: 400, message: 'sourceUrl 不能为空' };
     if (!openid) return { code: 401, message: '未登录' };

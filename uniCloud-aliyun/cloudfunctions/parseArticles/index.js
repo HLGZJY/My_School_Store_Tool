@@ -1,6 +1,7 @@
 'use strict';
 
 const db = uniCloud.database();
+const dbCmd = db.command;
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
@@ -25,6 +26,155 @@ function loadConfig() {
     }
 }
 loadConfig();
+
+// ============ 进度任务管理 ============
+
+/**
+ * 创建处理任务
+ */
+async function createTask(linkIds) {
+    const now = Date.now();
+    const taskId = 'task_' + now + '_' + Math.random().toString(36).substr(2, 9);
+
+    console.log('[parseArticles] 创建任务:', taskId, '共', linkIds.length, '个链接');
+
+    if (linkIds.length > 0) {
+        try {
+            // 检查记录是否存在
+            const existing = await db.collection('url_queue').doc(linkIds[0]).get();
+            if (existing.data && existing.data[0]) {
+                await db.collection('url_queue').doc(linkIds[0]).update({
+                    taskId: taskId,
+                    taskInfo: {
+                        taskId: taskId,
+                        total: linkIds.length,
+                        currentIndex: 0,
+                        startTime: now,
+                        status: 'processing',
+                        results: [],
+                        linkIds: linkIds,
+                        successCount: 0,
+                        failedCount: 0
+                    }
+                });
+                console.log('[parseArticles] 任务创建成功');
+            }
+        } catch (e) {
+            console.error('[parseArticles] 创建任务失败:', e);
+        }
+    }
+
+    return taskId;
+}
+
+/**
+ * 更新任务进度
+ */
+async function updateTaskProgress(linkId, progressInfo) {
+    try {
+        await db.collection('url_queue').doc(linkId).update({
+            taskInfo: progressInfo
+        });
+    } catch (e) {
+        console.error('[parseArticles] 更新任务进度失败:', e);
+    }
+}
+
+/**
+ * 获取任务进度
+ * @param {string} taskToken - 任务token（第一个链接ID）
+ * @param {Array} linkIds - 所有链接ID列表
+ */
+async function getTaskProgress(taskToken, linkIds) {
+    if (!taskToken || !linkIds || linkIds.length === 0) {
+        return null;
+    }
+
+    try {
+        // 查询所有相关链接的状态
+        // 使用 where IN 查询
+        const processedCount = await db.collection('url_queue')
+            .where({
+                _id: dbCmd.in(linkIds),
+                status: 'processed'
+            })
+            .count();
+
+        const processingCount = await db.collection('url_queue')
+            .where({
+                _id: dbCmd.in(linkIds),
+                status: 'processing'
+            })
+            .count();
+
+        const failedCount = await db.collection('url_queue')
+            .where({
+                _id: dbCmd.in(linkIds),
+                status: 'failed'
+            })
+            .count();
+
+        const total = linkIds.length;
+        const completedCount = processedCount.total + failedCount.total;
+        const currentIndex = completedCount;
+        const status = currentIndex >= total ? 'completed' : 'processing';
+
+        // 获取当前正在处理的 URL
+        let currentUrl = '';
+        const processingLinks = await db.collection('url_queue')
+            .where({
+                _id: dbCmd.in(linkIds),
+                status: 'processing'
+            })
+            .limit(1)
+            .get();
+
+        if (processingLinks.data && processingLinks.data.length > 0) {
+            currentUrl = processingLinks.data[0].url;
+        }
+
+        // 从 taskInfo 获取开始时间
+        let startTime = Date.now();
+        let successCount = processedCount.total;
+        const result = await db.collection('url_queue').doc(taskToken).get();
+        if (result.data && result.data[0] && result.data[0].taskInfo) {
+            startTime = result.data[0].taskInfo.startTime || startTime;
+            successCount = result.data[0].taskInfo.successCount || processedCount.total;
+        }
+
+        console.log('[parseArticles] 进度: completed=', completedCount, '/', total, 'processing=', processingCount.total);
+
+        return {
+            taskId: taskToken,
+            total: total,
+            currentIndex: currentIndex,
+            startTime: startTime,
+            status: status,
+            successCount: successCount,
+            failedCount: failedCount.total,
+            currentUrl: currentUrl,
+            linkIds: linkIds
+        };
+    } catch (e) {
+        console.error('[parseArticles] 获取任务进度失败:', e);
+    }
+    return null;
+}
+
+/**
+ * 清理任务信息
+ */
+async function clearTaskProgress(linkIds) {
+    if (!linkIds || linkIds.length === 0) return;
+
+    try {
+        await db.collection('url_queue').doc(linkIds[0]).update({
+            taskInfo: dbCmd.remove()
+        });
+    } catch (e) {
+        console.error('[parseArticles] 清理任务进度失败:', e);
+    }
+}
 
 // ============ 工具函数 ============
 
@@ -200,13 +350,47 @@ async function saveArticle(item, url, sourceIdFromQueue, sourceNameFromQueue) {
         finalSourceName = finalSourceId || '未知来源';
     }
 
+    // 计算时效（根据分类设置不同时效）
+    const categoryExpireDays = {
+        notice: 7,      // 通知公告 7天
+        academic: 30,   // 学术动态 30天
+        activity: 14,   // 活动赛事 14天
+        service: 14,    // 生活服务 14天
+        other: 7        // 其他 7天
+    };
+    const expireDays = categoryExpireDays[item.category] || 7;
+
+    // 安全解析时间
+    let publishTime = now;
+    if (item.publishTime) {
+        const parsedTime = new Date(item.publishTime).getTime();
+        if (!isNaN(parsedTime)) {
+            publishTime = parsedTime;
+        }
+    }
+    const expireTime = publishTime + expireDays * 24 * 60 * 60 * 1000;
+
     // 检查是否已存在（通过 originalUrl 查重）
     const existing = await db.collection('articles').where({ originalUrl: url }).get();
     if (existing.data.length > 0) {
-        return { exists: true, articleId: existing.data[0]._id };
+        // 如果已存在，检查是否过期，过期则允许更新
+        const existingArticle = existing.data[0];
+        const isExpired = Date.now() > (existingArticle.expireTime || 0);
+        if (!isExpired) {
+            return { exists: true, articleId: existingArticle._id };
+        }
+        // 已过期，删除旧文章，重新创建
+        await db.collection('articles').doc(existingArticle._id).delete();
     }
 
     // 新增文章
+    console.log('[parseArticles] 准备保存文章:', {
+        title: item.title,
+        category: item.category,
+        publishTime: publishTime,
+        expireTime: expireTime
+    });
+
     const addResult = await db.collection('articles').add({
         title: item.title || '无标题',
         content: item.content || '',
@@ -217,18 +401,22 @@ async function saveArticle(item, url, sourceIdFromQueue, sourceNameFromQueue) {
         tags: {
             source: [finalSourceName],
             role: ['通用'],
-            custom: item.tags || []  // 保留AI返回的tags，但不在前端显示
+            custom: item.tags || []  // 保留AI返回的tags
         },
         urgency: item.urgency || 'low',
         sourceId: finalSourceId,
         sourceName: finalSourceName,
         originalUrl: url,
-        publishTime: item.publishTime ? new Date(item.publishTime).getTime() : now,
+        publishTime: publishTime,
+        expireTime: expireTime,           // 时效截止时间
+        isExpired: false,                 // 是否已过期
         stats: { viewCount: 0, collectCount: 0, shareCount: 0 },
         status: item.isValid ? 'pending' : 'draft', // 待审核状态
         createdAt: now,
         updatedAt: now
     });
+
+    console.log('[parseArticles] 文章保存成功, id:', addResult.id);
 
     return { exists: false, articleId: addResult.id };
 }
@@ -293,9 +481,256 @@ exports.main = async (event, context) => {
         }
     }
 
+    // 获取处理进度
+    if (action === 'getProgress') {
+        const { taskToken, linkIds } = event;
+        if (!taskToken) {
+            return { code: 400, message: '缺少 taskToken' };
+        }
+
+        // 如果没有传入 linkIds，从 taskInfo 中获取
+        let allLinkIds = linkIds;
+        if (!allLinkIds || allLinkIds.length === 0) {
+            // 尝试从数据库获取
+            try {
+                const result = await db.collection('url_queue').doc(taskToken).get();
+                if (result.data && result.data[0] && result.data[0].taskInfo) {
+                    allLinkIds = result.data[0].taskInfo.linkIds || [taskToken];
+                }
+            } catch (e) {
+                allLinkIds = [taskToken];
+            }
+        }
+
+        try {
+            const taskInfo = await getTaskProgress(taskToken, allLinkIds);
+            if (!taskInfo) {
+                return { code: 0, data: { status: 'idle', current: 0, total: 0 } };
+            }
+
+            // 计算速度和预估剩余时间
+            const now = Date.now();
+            const usedTime = now - taskInfo.startTime;
+            const avgSpeed = taskInfo.currentIndex > 0 ? Math.round(usedTime / taskInfo.currentIndex) : 0;
+            const remaining = taskInfo.total - taskInfo.currentIndex;
+            const estimatedLeft = avgSpeed > 0 ? avgSpeed * remaining : 0;
+
+            return {
+                code: 0,
+                data: {
+                    status: taskInfo.status,
+                    current: taskInfo.currentIndex,
+                    total: taskInfo.total,
+                    usedTime: usedTime,
+                    speed: avgSpeed,
+                    estimatedLeft: estimatedLeft,
+                    currentUrl: taskInfo.currentUrl || '',
+                    successCount: taskInfo.successCount || 0,
+                    failedCount: taskInfo.failedCount || 0
+                }
+            };
+        } catch (e) {
+            console.error('[parseArticles] 获取进度失败:', e);
+            return { code: 500, message: e.message };
+        }
+    }
+
+    // 开始批量处理（支持进度查询）
+    if (action === 'startBatchProcess') {
+        console.log('[parseArticles] startBatchProcess 接收参数:', { linkIds, openid });
+
+        if (!linkIds || linkIds.length === 0) {
+            console.error('[parseArticles] linkIds 为空');
+            return { code: 400, message: '请选择要处理的链接' };
+        }
+
+        if (!openid) {
+            console.warn('[parseArticles] openid 为空，但继续执行');
+            // 暂时不强制验证，继续执行
+            // return { code: 401, message: '未登录' };
+        }
+
+        const taskToken = linkIds[0]; // 使用第一个链接ID作为 token
+        const startTime = Date.now();
+
+        console.log('[parseArticles] 开始处理, linkIds:', linkIds.length);
+
+        try {
+            // 初始化任务信息
+            console.log('[parseArticles] 调用 createTask');
+            await createTask(linkIds);
+            console.log('[parseArticles] createTask 完成');
+
+            const results = [];
+            let successCount = 0;
+            let failedCount = 0;
+
+            // 逐个处理链接
+            for (let i = 0; i < linkIds.length; i++) {
+                const linkId = linkIds[i];
+                const itemStartTime = Date.now();
+
+                // 获取链接信息
+                const linkInfo = await db.collection('url_queue').doc(linkId).get();
+                if (!linkInfo.data.length) {
+                    continue;
+                }
+                const item = linkInfo.data[0];
+
+                // 更新状态为处理中
+                await db.collection('url_queue').doc(linkId).update({
+                    status: 'processing',
+                    updateTime: Date.now()
+                });
+
+                // 获取HTML
+                const httpRes = await httpGet(item.url);
+                if (!httpRes.success) {
+                    await db.collection('url_queue').doc(linkId).update({
+                        status: 'failed',
+                        error: httpRes.error,
+                        updateTime: Date.now()
+                    });
+                    results.push({ url: item.url, status: 'fetch_failed', error: httpRes.error });
+                    failedCount++;
+
+                    // 更新进度
+                    await updateTaskProgress(linkId, {
+                        taskId: taskToken,
+                        linkIds: linkIds,
+                        total: linkIds.length,
+                        currentIndex: i + 1,
+                        startTime: startTime,
+                        status: 'processing',
+                        results: results,
+                        successCount: successCount,
+                        failedCount: failedCount,
+                        linkIds: linkIds
+                    });
+                    continue;
+                }
+
+                // AI解析
+                const aiRes = await aiParse(httpRes.content);
+                if (!aiRes.success) {
+                    await db.collection('url_queue').doc(linkId).update({
+                        status: 'failed',
+                        error: aiRes.error,
+                        retryCount: (item.retryCount || 0) + 1,
+                        updateTime: Date.now()
+                    });
+                    results.push({ url: item.url, status: 'parse_failed', error: aiRes.error });
+                    failedCount++;
+
+                    // 更新进度
+                    await updateTaskProgress(linkId, {
+                        taskId: taskToken,
+                        linkIds: linkIds,
+                        total: linkIds.length,
+                        currentIndex: i + 1,
+                        startTime: startTime,
+                        status: 'processing',
+                        results: results,
+                        successCount: successCount,
+                        failedCount: failedCount,
+                        linkIds: linkIds
+                    });
+                    continue;
+                }
+
+                // 保存文章
+                const saveRes = await saveArticle(aiRes.data, item.url, item.sourceId, item.sourceName);
+
+                // 更新链接状态
+                await db.collection('url_queue').doc(linkId).update({
+                    status: 'processed',
+                    processTime: Date.now(),
+                    articleId: saveRes.articleId,
+                    updateTime: Date.now()
+                });
+
+                results.push({
+                    url: item.url,
+                    status: saveRes.exists ? 'exists' : 'saved',
+                    title: aiRes.data?.title,
+                    articleId: saveRes.articleId
+                });
+
+                if (!saveRes.exists) successCount++;
+
+                // 更新进度（每处理完一个就更新）
+                await updateTaskProgress(linkId, {
+                    taskId: taskToken,
+                    linkIds: linkIds,
+                    total: linkIds.length,
+                    currentIndex: i + 1,
+                    startTime: startTime,
+                    status: 'processing',
+                    results: results,
+                    successCount: successCount,
+                    failedCount: failedCount,
+                    linkIds: linkIds
+                });
+
+                // 记录单个链接处理时间
+                const itemUsedTime = Date.now() - itemStartTime;
+                console.log(`[parseArticles] 处理 ${i + 1}/${linkIds.length}: ${item.url} (${itemUsedTime}ms)`);
+            }
+
+            // 任务完成
+            const now = Date.now();
+            const totalUsedTime = now - startTime;
+            const avgSpeed = Math.round(totalUsedTime / linkIds.length);
+
+            // 更新最终状态
+            await updateTaskProgress(linkIds[0], {
+                taskId: taskToken,
+                linkIds: linkIds,
+                total: linkIds.length,
+                currentIndex: linkIds.length,
+                startTime: startTime,
+                status: 'completed',
+                results: results,
+                successCount: successCount,
+                failedCount: failedCount,
+                linkIds: linkIds,
+                totalUsedTime: totalUsedTime,
+                avgSpeed: avgSpeed
+            });
+
+            const remainingCount = await db.collection('url_queue').where({ status: 'pending' }).count();
+
+            return {
+                code: 0,
+                data: {
+                    status: 'completed',
+                    taskToken: taskToken,
+                    processed: linkIds.length,
+                    success: successCount,
+                    failed: failedCount,
+                    results: results,
+                    remainingCount: remainingCount.total,
+                    usedTime: totalUsedTime,
+                    avgSpeed: avgSpeed,
+                    message: `处理完成：成功 ${successCount} 个，失败 ${failedCount} 个`
+                }
+            };
+        } catch (e) {
+            console.error('[parseArticles] 批量处理失败:', e);
+            // 更新任务状态为失败
+            if (linkIds && linkIds.length > 0) {
+                await updateTaskProgress(linkIds[0], {
+                    status: 'failed',
+                    error: e.message
+                });
+            }
+            return { code: 500, message: e.message };
+        }
+    }
+
     if (!openid) return { code: 401, message: '未登录' };
 
-    // 如果传入了 linkIds，则只处理指定的链接
+    // 如果传入了 linkIds，则只处理指定的链接（兼容旧版）
     if (linkIds && linkIds.length > 0) {
         try {
             const results = [];

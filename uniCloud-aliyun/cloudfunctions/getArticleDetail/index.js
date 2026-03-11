@@ -25,7 +25,23 @@ module.exports = {
 
             const article = articleRes.data[0];
 
-            // 获取相关推荐（同一来源的最新文章）
+            // 检查文章是否过期
+            const now = Date.now();
+            const expireTime = article.expireTime || 0;
+            const isExpired = now > expireTime;
+
+            // 如果文章已过期且 isExpired 标记为 false，更新数据库
+            if (isExpired && !article.isExpired) {
+                await db.collection('articles')
+                    .doc(articleId)
+                    .update({
+                        isExpired: true,
+                        updatedAt: now
+                    });
+                article.isExpired = true;
+            }
+
+            // 获取相关推荐（同一来源的最新文章，排除已过期的）
             const relatedRes = await db.collection('articles')
                 .where({
                     _id: db.command.neq(articleId),
@@ -56,6 +72,8 @@ module.exports = {
                 tags: article.tags,
                 urgency: article.urgency,
                 publishTime: article.publishTime,
+                expireTime: article.expireTime,
+                isExpired: article.isExpired || isExpired,
                 originalUrl: article.originalUrl,
                 stats: article.stats || { viewCount: 0, collectCount: 0 },
                 relatedArticles: relatedRes.data.map(item => ({

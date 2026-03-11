@@ -1,83 +1,91 @@
-# 会话状态 2026-03-07 - 链接池管理优化
+ # 会话状态 2026-03-11 - 文章时效与链接池管理
 
-   ## 项目背景
+  ---
 
-   校园信息发布工具小程序（uni-app + uniCloud + MongoDB）
+  ## 项目背景
 
-   ---
+  校园信息发布工具小程序（uni-app + uniCloud + MongoDB）
 
-   ## 本次会话完成的工作
+  ---
 
-   ### 1. 权限问题修复
-   - 修复了数据源智能分析的权限问题（analyze action
-   不需要验证登录）
+  ## 本次会话完成的工作
 
-   ### 2. AI解析提示词优化
-   - 改进了 AI 解析的时间提取提示词，增加了详细的时间提取指导
-   - 强调使用 YYYY-MM-DD 格式
+  ### 1. 文章时效功能
+  - 在 `parseArticles/index.js` 的 `saveArticle` 函数中新增
+  `expireTime` 字段
+  - 根据文章分类设置不同时效：
+    - 通知公告：7天
+    - 学术动态：30天
+    - 活动赛事：14天
+    - 生活服务：14天
+    - 其他：7天
+  - 新增 `isExpired` 字段标记是否过期
+  - 已过期文章再次解析时自动删除重建
+  - 在 `getArticleDetail/index.js` 中查询时自动检查过期状态并更新
 
-   ### 3. 提取历史展示（与 url_queue 联动）
-   - 新增 `getHistory` action，从 url_queue 按 sourceUrl
-   分组统计
-   - 前端页面 Tab1 显示提取历史（链接池状态）
-   - 点击历史可快速选择 URL
+  ### 2. 链接池管理功能--待测试，下次工作先测试
+  - 在 `extractUrls/index.js` 新增管理接口：
+    - `getAllLinks` - 获取所有链接（分页、状态筛选）
+    - `deleteLink` - 删除单个链接
+    - `deleteLinks` - 批量删除链接
+    - `updateLink` - 修改链接URL
+  - 在 `simple-fetch.vue` 新增第三个 Tab "链接管理"
+    - 显示所有链接列表（分页）
+    - 状态筛选功能
+    - 异常链接检测（长度<10或>200字符，红色标记）
+    - 批量选择删除
+    - 点击修改异常链接
+    - 点击查看链接详情
 
-   ### 4. 数据源联动
-   - 提取链接成功后自动创建/更新 sources 表
-   - 统计文章数量、更新时间等
+  ### 3. 实时进度功能优化
+  - 改造 `parseArticles/index.js` 支持进度查询
+  - 前端轮询获取实时进度
+  - 显示：进度条、当前进度、已用时间、处理速度、预估剩余、正在处理
+  的URL
 
-   ### 5. AI处理页面改造
-   - 新增 `getPendingList` action，按 sourceUrl
-   分组返回待处理链接
-   - 支持按链接ID列表处理
-   - 前端页面 Tab2 改造：
-     - 显示所有待处理链接（按主链接分组）
-     - 支持展开/折叠每个分组
-     - 支持全选/单选具体链接
-     - 批量解析选中的链接
+  ---
 
-   ### 6. 修复问题
-   - 修复了404检测问题（改用 GET 请求）
-   - 修复了 parseArticles 云函数语法错误
-   - 修复了前端渲染报错（添加空值检查）
-   - 添加了超时提示（建议每次选择5-10条）
+  ## 修改的文件
 
-   ---
+  | 文件 | 修改内容 |
+  |------|----------|
+  | uniCloud-aliyun/cloudfunctions/parseArticles/index.js |
+  新增时效字段expireTime/isExpired，优化时间解析 |
+  | uniCloud-aliyun/cloudfunctions/getArticleDetail/index.js |
+  新增过期检查和返回字段 |
+  | uniCloud-aliyun/cloudfunctions/extractUrls/index.js |
+  新增链接池管理接口 |
+  | pages/admin/simple-fetch.vue | 新增链接管理Tab，修复变量名冲突
+  |
+  | pages/admin/dashboard.vue | 接入数据库统计 |
 
-   ## 修改的文件
+  ---
 
-   | 文件 | 修改内容 |
-   |------|----------|
-   | uniCloud-aliyun/cloudfunctions/manageSources/index.js |
-   修复权限问题 |
-   | uniCloud-aliyun/cloudfunctions/extractUrls/index.js | 新增
-   getHistory action，修复404检测，数据源联动 |
-   | uniCloud-aliyun/cloudfunctions/parseArticles/index.js |
-   优化提示词，新增 getPendingList，支持 linkIds 处理 |
-   | pages/admin/simple-fetch.vue |
-   提取历史展示，AI处理批量选择UI |
+  ## 待完成（文章显示效果优化）
+  1. **来源中文简称映射** - 将 sourceId 转换为中文简称
+  2. **显示 tags.custom** - 在详情页展示AI生成的自定义标签
+  3. **内容优化** - 详情页优先显示摘要summary，修复溢出
 
-   ---
+  ---
 
-   ## 待优化
+  ## Git 提交记录
 
-   - 云函数超时问题：需要在 uniCloud 控制台调整超时时间
-   - 建议每次处理5-10条链接，避免超时
+  | Commit | 描述 |
+  |--------|------|
+  | 59b2af7 | feat: 链接池管理优化 - 提取历史、数据源联动、批量选
+   |
+  | 3fe1ad1 | docs: 更新会话状态摘要 |
+  | e4ab774 | feat: 数据源管理和链接池优化 |
+  | 3c10e1f | feat: 优化文章存储逻辑 - 自动提取sourceId和sourceName
+   |
+  | 4e6ec42 | refactor:
+  删除fetchUrl云函数，由extractUrls和parseArticles替代 |
 
-   ---
+  ---
 
-   ## Git 提交记录
+  ## 技术栈
 
-   | Commit | 描述 |
-   |--------|------|
-   | 30d6b6a | feat: 链接池管理优化 -
-   提取历史、数据源联动、批量选择 |
-
-   ---
-
-   ## 技术栈
-
-   - 前端：uni-app (Vue3)
-   - 后端：uniCloud (Node.js)
-   - 数据库：MongoDB (阿里云)
-   - AI：Moonshot Kimi AP
+  - 前端：uni-app (Vue3)
+  - 后端：uniCloud (Node.js)
+  - 数据库：MongoDB (阿里云)
+  - AI：Moonshot Kimi API

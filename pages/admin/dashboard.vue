@@ -13,7 +13,7 @@
 
         <!-- 统计卡片 -->
         <view class="stats-grid">
-            <view class="stat-card">
+            <view class="stat-card" @click="goToReview">
                 <text class="stat-num">{{ stats.totalArticles }}</text>
                 <text class="stat-label">文章总数</text>
             </view>
@@ -21,13 +21,27 @@
                 <text class="stat-num">{{ stats.todayArticles }}</text>
                 <text class="stat-label">今日新增</text>
             </view>
-            <view class="stat-card">
+            <view class="stat-card" @click="goToReview">
                 <text class="stat-num">{{ stats.pendingReview }}</text>
                 <text class="stat-label">待审核</text>
             </view>
-            <view class="stat-card">
+            <view class="stat-card" @click="goToSources">
                 <text class="stat-num">{{ stats.sources }}</text>
                 <text class="stat-label">数据源</text>
+            </view>
+        </view>
+
+        <!-- 链接池状态 -->
+        <view class="link-pool-section" v-if="stats.pendingLinks > 0">
+            <view class="link-pool-info" @click="goToSimpleFetch">
+                <view class="link-pool-left">
+                    <uni-icons type="link" size="20" color="#FF9500"></uni-icons>
+                    <text class="link-pool-text">链接池待处理</text>
+                </view>
+                <view class="link-pool-right">
+                    <text class="link-pool-count">{{ stats.pendingLinks }} 条</text>
+                    <text class="link-pool-arrow">去处理 ></text>
+                </view>
             </view>
         </view>
 
@@ -95,7 +109,8 @@ export default {
                 totalArticles: 0,
                 todayArticles: 0,
                 pendingReview: 0,
-                sources: 0
+                sources: 0,
+                pendingLinks: 0
             },
             recentLogs: []
         }
@@ -107,6 +122,7 @@ export default {
     },
     onShow() {
         this.loadStats()
+        this.loadLogs()
     },
     methods: {
         // 检查管理员权限
@@ -137,14 +153,35 @@ export default {
         async loadStats() {
             try {
                 const res = await uniCloud.callFunction({
-                    name: 'adminStats'
+                    name: 'adminStats',
+                    data: { action: 'getStats' }
                 })
+
+                console.log('[adminStats] 响应:', res.result)
 
                 if (res.result.code === 0) {
                     this.stats = res.result.data
+                } else {
+                    console.error('获取统计数据失败:', res.result.message)
                 }
             } catch (e) {
                 console.error('加载统计数据失败:', e)
+            }
+        },
+
+        // 加载最近日志
+        async loadLogs() {
+            try {
+                const res = await uniCloud.callFunction({
+                    name: 'adminStats',
+                    data: { action: 'getLogs' }
+                })
+
+                if (res.result.code === 0) {
+                    this.recentLogs = res.result.data || []
+                }
+            } catch (e) {
+                console.error('加载日志失败:', e)
             }
         },
 
@@ -259,7 +296,7 @@ export default {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 
     .stat-card {
         background-color: #FFFFFF;
@@ -281,6 +318,48 @@ export default {
             margin-top: 4px;
         }
     }
+}
+
+.link-pool-section {
+    margin-bottom: 20px;
+}
+
+.link-pool-info {
+    background: linear-gradient(135deg, #FF9500 0%, #FF6B00 100%);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.link-pool-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.link-pool-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #FFFFFF;
+}
+
+.link-pool-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.link-pool-count {
+    font-size: 14px;
+    font-weight: 600;
+    color: #FFFFFF;
+}
+
+.link-pool-arrow {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .menu-section {
