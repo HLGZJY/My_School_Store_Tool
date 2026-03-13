@@ -12,15 +12,10 @@ module.exports = {
         console.log('days:', days, 'limit:', limit);
 
         try {
-            // 计算7天前的时间戳
-            const sevenDaysAgo = now - days * 24 * 60 * 60 * 1000;
-            console.log('sevenDaysAgo:', sevenDaysAgo, new Date(sevenDaysAgo).toISOString());
-
-            // 从 articles 表获取热门文章（按浏览量排序）
+            // 从 articles 表获取热门文章（按浏览量排序），不限制时间
             const res = await db.collection('articles')
                 .where({
-                    status: 'published',
-                    publishTime: db.command.gte(sevenDaysAgo)
+                    status: db.command.in(['published', 'pending'])
                 })
                 .orderBy('publishTime', 'desc')
                 .limit(100)

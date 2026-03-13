@@ -9,16 +9,13 @@ module.exports = {
         console.log('当前时间:', now);
 
         try {
-            // 获取最近7天的文章，按日期分组
-            const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
-            console.log('sevenDaysAgo:', sevenDaysAgo, new Date(sevenDaysAgo).toISOString());
-
+            // 查询所有已发布/待审核文章，不限制时间
             const res = await db.collection('articles')
                 .where({
-                    status: 'published',
-                    publishTime: db.command.gte(sevenDaysAgo)
+                    status: db.command.in(['published', 'pending'])
                 })
                 .orderBy('publishTime', 'desc')
+                .limit(100)
                 .get();
 
             console.log('getTimeline: 获取到文章数量', res.data.length);

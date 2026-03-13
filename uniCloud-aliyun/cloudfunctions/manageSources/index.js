@@ -172,12 +172,43 @@ exports.main = async (event, context) => {
 
     try {
         // analyze 和 list 不需要验证权限，直接处理
-        if (action === 'analyze' || action === 'list') {
+        if (action === 'analyze' || action === 'list' || action === 'listWithSubscription') {
             if (action === 'list') {
-                const sources = await db.collection('sources').get();
+                const sources = await db.collection('sources').where({ enabled: true }).get();
                 return {
                     code: 0,
                     data: sources.data || []
+                };
+            }
+
+            // listWithSubscription: 返回数据源列表，带用户订阅状态
+            if (action === 'listWithSubscription') {
+                const sources = await db.collection('sources').where({ enabled: true }).get();
+                const sourceList = sources.data || [];
+
+                // 获取用户订阅
+                let userSubs = [];
+                const openid = context.OPENID;
+                if (openid) {
+                    const subsRes = await db.collection('subscriptions').where({ openid }).get();
+                    userSubs = subsRes.data || [];
+                }
+
+                const subscribedIds = userSubs.map(s => s.sourceId);
+
+                // 为每个数据源标记订阅状态
+                const result = sourceList.map(s => ({
+                    _id: s._id,
+                    sourceId: s.sourceId,
+                    sourceName: s.sourceName,
+                    sourceType: s.sourceType,
+                    description: s.description,
+                    isSubscribed: subscribedIds.includes(s.sourceId)
+                }));
+
+                return {
+                    code: 0,
+                    data: result
                 };
             }
             // analyze action
@@ -195,9 +226,9 @@ exports.main = async (event, context) => {
         }
 
         // 其他 action 需要验证登录和权限
-        if (!openid) {
-            return { code: 401, message: '未登录' };
-        }
+        // if (!openid) {
+        //     return { code: 401, message: '未登录' };
+        // }
 
         await verifyAdmin(openid);
 

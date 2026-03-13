@@ -245,23 +245,28 @@ export default {
 			// 构建筛选参数
 			            const timeFilter = this.getTimeRangeFilter();
 
+            // 获取用户订阅的 sourceIds（用于过滤首页文章）
+            const subscriptions = uni.getStorageSync('subscriptions') || [];
+            const subscribedSourceIds = subscriptions.map(s => s.id).filter(id => id);
+
             try {
                 const res = await uniCloud.callFunction({
-                    name: 'getArticles',
+                    name: 'adminGetArticles',
                     data: {
                         page: this.page,
                         pageSize: this.pageSize,
                         category,
                         userRole,
-                                                sourceId: this.filterSourceId,
-                                                tag: this.filterTag,
-                                                startDate: timeFilter.startTime || 0,
-                                                endDate: timeFilter.endTime || 0
+                        sourceId: this.filterSourceId,
+                        sourceIds: subscribedSourceIds.length > 0 ? subscribedSourceIds : [],  // 传入用户订阅的来源
+                        tag: this.filterTag,
+                        startDate: timeFilter.startTime || 0,
+                        endDate: timeFilter.endTime || 0
                     }
                 });
 
                 if (res.result.code === 0) {
-                    const { articles, hasMore } = res.result.data;
+                    const { list: articles, hasMore } = res.result.data;
 
                     if (isRefresh) {
                         this.articleList = articles.map(a => ({
@@ -296,7 +301,7 @@ export default {
         async loadRecommendations() {
             try {
                 const res = await uniCloud.callFunction({
-                    name: 'getArticles',
+                    name: 'adminGetArticles',
                     data: {
                         page: 1,
                         pageSize: 3,

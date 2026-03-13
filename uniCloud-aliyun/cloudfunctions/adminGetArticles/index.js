@@ -10,6 +10,7 @@ module.exports = {
             category = '',
             userRole = 'student',
             sourceId = '',
+            sourceIds = [],  // 支持多个来源筛选
             tag = '',
             startDate = 0,
             endDate = 0
@@ -22,9 +23,14 @@ module.exports = {
             // 支持前端传入的 status 筛选（管理员审核页面需要）
             if (event.where && event.where.status) {
                 whereCondition.status = event.where.status;
-            } else {
-                // 默认只查询已发布的文章
+            } else if (!event.where) {
+                // 默认只查询已发布的文章（只有传入 where 时才不过滤）
                 whereCondition.status = 'published';
+            }
+
+            // 关键字搜索
+            if (event.where && event.where.title && event.where.title.$regex) {
+                whereCondition.title = event.where.title;
             }
 
             // 分类筛选
@@ -32,9 +38,11 @@ module.exports = {
                 whereCondition.category = category;
             }
 
-            // 来源筛选
+            // 来源筛选（支持单个 sourceId 或多个 sourceIds 数组）
             if (sourceId) {
                 whereCondition.sourceId = sourceId;
+            } else if (sourceIds && sourceIds.length > 0) {
+                whereCondition.sourceId = db.command.in(sourceIds);
             }
 
             // 标签筛选

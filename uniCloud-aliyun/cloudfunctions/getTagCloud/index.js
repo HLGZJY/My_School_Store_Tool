@@ -12,8 +12,8 @@ module.exports = {
             // 从 articles 表聚合统计标签
             // 由于 MongoDB 聚合较复杂，这里简化为查询所有文章后统计
             const res = await db.collection('articles')
-                .where({ status: 'published' })
-                .limit(100)
+                .where({ status: db.command.in(['published', 'pending']) })
+                .limit(500)
                 .get();
 
             console.log('getTagCloud: 查询到文章数量:', res.data.length);
