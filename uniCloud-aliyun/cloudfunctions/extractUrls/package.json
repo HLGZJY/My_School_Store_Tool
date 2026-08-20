@@ -1,0 +1,9 @@
+{
+	"name": "extractUrls",
+	"version": "1.0.0",
+	"description": "从列表页提取链接并存入链接池",
+	"main": "index.js",
+	"dependencies": {
+		"axios": "^1.6.0"
+	}
+}

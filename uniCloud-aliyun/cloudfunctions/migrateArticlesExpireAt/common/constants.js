@@ -1,0 +1,42 @@
+'use strict';
+
+/**
+ * Shared constants for cloud functions
+ * Aligned with frontend utils/constants.js
+ */
+
+const ERROR_CODES = {
+    SUCCESS: 0,
+    SYSTEM_ERROR: 1000,
+    PARAM_ERROR: 1001,
+    NOT_LOGIN: 1002,
+    NO_PERMISSION: 1003,
+    RESOURCE_NOT_FOUND: 1004,
+    DATABASE_ERROR: 1005,
+    NETWORK_ERROR: 1006,
+    THIRD_PARTY_ERROR: 1007,
+    WX_LOGIN_ERROR: 2001,
+    GET_USER_INFO_ERROR: 2002,
+    ARTICLE_NOT_FOUND: 3001,
+    ARTICLE_DELETED: 3002,
+    ALREADY_COLLECTED: 3003,
+    NOT_COLLECTED: 3004,
+    SOURCE_NOT_FOUND: 4001,
+    SYNC_ERROR: 4002,
+    AI_PROCESS_ERROR: 4003,
+    AI_CONFIDENCE_LOW: 4004,
+    URL_EXTRACT_ERROR: 5001,
+    URL_VALIDATE_ERROR: 5002,
+    PARSE_STRATEGY_ERROR: 5003,
+    STRATEGY_NOT_FOUND: 5004
+};
+
+const TOKEN_CONFIG = {
+    ALGORITHM: 'sha256',
+    EXPIRY_MS: 7 * 24 * 60 * 60 * 1000 // 7 days
+};
+
+module.exports = {
+    ERROR_CODES,
+    TOKEN_CONFIG
+};

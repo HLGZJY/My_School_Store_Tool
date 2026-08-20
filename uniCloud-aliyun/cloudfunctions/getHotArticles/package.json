@@ -1,0 +1,7 @@
+{
+    "name": "getHotArticles",
+    "version": "1.0.0",
+    "description": "获取热门文章排行",
+    "main": "index.js",
+    "dependencies": {}
+}

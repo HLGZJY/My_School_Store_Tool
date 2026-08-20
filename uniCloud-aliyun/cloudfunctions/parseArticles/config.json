@@ -1,0 +1,6 @@
+{
+    "moonshot": {
+        "apiKey": "${MOONSHOT_API_KEY}",
+        "baseUrl": "https://api.moonshot.cn/v1"
+    }
+}

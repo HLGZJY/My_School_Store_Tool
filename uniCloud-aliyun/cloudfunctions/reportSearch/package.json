@@ -1,0 +1,7 @@
+{
+    "name": "reportSearch",
+    "version": "1.0.0",
+    "description": "上报搜索记录",
+    "main": "index.js",
+    "dependencies": {}
+}

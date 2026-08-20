@@ -1,0 +1,7 @@
+{
+    "name": "getTagCloud",
+    "version": "1.0.0",
+    "description": "获取标签云",
+    "main": "index.js",
+    "dependencies": {}
+}

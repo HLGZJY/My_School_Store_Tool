@@ -1,0 +1,9 @@
+{
+	"name": "parseArticles",
+	"version": "1.0.0",
+	"description": "从链接池获取链接并AI解析，存入文章集合",
+	"main": "index.js",
+	"dependencies": {
+		"axios": "^1.6.0"
+	}
+}

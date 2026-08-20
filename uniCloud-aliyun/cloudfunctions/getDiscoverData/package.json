@@ -1,0 +1,7 @@
+{
+    "name": "getDiscoverData",
+    "version": "1.0.0",
+    "description": "批量获取发现页数据（热门排行、标签云、时间轴、订阅）",
+    "main": "index.js",
+    "dependencies": {}
+}

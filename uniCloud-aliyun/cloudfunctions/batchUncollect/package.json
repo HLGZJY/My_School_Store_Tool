@@ -1,0 +1,8 @@
+{
+    "name": "batchUncollect",
+    "version": "1.0.0",
+    "description": "批量取消收藏",
+    "main": "index.js",
+    "dependencies": {},
+    "extensions": {}
+}

@@ -1,0 +1,10 @@
+{
+    "name": "adminStats",
+    "version": "1.0.0",
+    "description": "管理端统计数据接口",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "dependencies": {}
+}

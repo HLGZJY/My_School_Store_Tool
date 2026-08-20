@@ -1,0 +1,14 @@
+{
+	"name": "syncSources",
+	"version": "1.0.0",
+	"description": "定时同步数据源：HTTP 条件请求探测 + 增量拉取新链接",
+	"main": "index.js",
+	"dependencies": {
+		"axios": "^1.6.0"
+	},
+	"trigger": {
+		"name": "syncSources-trigger",
+		"type": "timer",
+		"config": "cron:0 */30 6-23 * * *"
+	}
+}

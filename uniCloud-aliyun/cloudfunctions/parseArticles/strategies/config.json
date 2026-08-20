@@ -1,0 +1,5 @@
+{
+  "aiModel": "kimi-k2-turbo-preview",
+  "apiBase": "https://api.moonshot.cn/v1/",
+  "apiKey": "${MOONSHOT_API_KEY}"
+}

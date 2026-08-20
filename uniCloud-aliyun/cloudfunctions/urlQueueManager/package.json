@@ -1,0 +1,6 @@
+{
+	"name": "urlQueueManager",
+	"version": "1.0.0",
+	"description": "URL queue CRUD operations for link pool management",
+	"main": "index.js"
+}

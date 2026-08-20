@@ -1,0 +1,45 @@
+{
+	"bsonType": "object",
+	"description": "消息通知表",
+	"required": ["openid", "title", "content"],
+	"permission": {
+		"read": "doc.openid == auth.openid",
+		"create": false,
+		"update": "doc.openid == auth.openid",
+		"delete": false,
+		"count": "doc.openid == auth.openid"
+	},
+	"properties": {
+		"_id": {
+			"description": "消息ID"
+		},
+		"openid": {
+			"bsonType": "string",
+			"description": "用户OpenID"
+		},
+		"title": {
+			"bsonType": "string",
+			"description": "消息标题"
+		},
+		"content": {
+			"bsonType": "string",
+			"description": "消息内容"
+		},
+		"type": {
+			"bsonType": "string",
+			"description": "消息类型: system-系统通知, activity-活动提醒, update-更新通知"
+		},
+		"isRead": {
+			"bsonType": "bool",
+			"description": "是否已读"
+		},
+		"link": {
+			"bsonType": "string",
+			"description": "跳转链接"
+		},
+		"createTime": {
+			"bsonType": "number",
+			"description": "创建时间"
+		}
+	}
+}

@@ -1,0 +1,6 @@
+{
+    "name": "getArticles",
+    "version": "1.0.0",
+    "description": "获取文章列表（管理端）",
+    "main": "index.js"
+}

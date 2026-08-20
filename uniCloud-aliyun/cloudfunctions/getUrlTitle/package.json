@@ -1,0 +1,9 @@
+{
+  "name": "get-url-title",
+  "version": "1.0.0",
+  "description": "Fetch and cache URL page titles",
+  "main": "index.js",
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}

@@ -1,0 +1,8 @@
+{
+    "name": "getReadingHistory",
+    "version": "1.0.0",
+    "description": "获取阅读历史",
+    "main": "index.js",
+    "dependencies": {},
+    "extensions": {}
+}

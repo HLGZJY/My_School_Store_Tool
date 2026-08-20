@@ -1,0 +1,49 @@
+/**
+ * 全局样式变量
+ */
+
+/* 主题颜色 */
+$uni-color-primary: #0A2540;
+$uni-color-accent: #00D4AA;
+$uni-color-background: #F7F9FA;
+$uni-color-white: #FFFFFF;
+$uni-color-text-primary: #0A2540;
+$uni-color-text-secondary: #4A5568;
+$uni-color-text-tertiary: #A0AEC0;
+$uni-color-border: #E8ECF1;
+$uni-color-danger: #EF4444;
+$uni-color-warning: #F97316;
+$uni-color-success: #10B981;
+
+/* 原有 uni-app 变量 */
+$uni-text-color: #4A5568;
+$uni-text-color-inverse: #FFFFFF;
+$uni-text-color-grey: #A0AEC0;
+$uni-text-color-placeholder: #A0AEC0;
+$uni-text-color-disable: #C0C0C0;
+
+$uni-bg-color: #FFFFFF;
+$uni-bg-color-grey: #F7F9FA;
+$uni-bg-color-hover: #F7F9FA;
+
+$uni-border-color: #E8ECF1;
+
+/* 字体大小 */
+$uni-font-size-sm: 12px;
+$uni-font-size-base: 14px;
+$uni-font-size-lg: 16px;
+$uni-font-size-xl: 18px;
+
+/* 边框圆角 */
+$uni-border-radius-sm: 4px;
+$uni-border-radius-base: 8px;
+$uni-border-radius-lg: 12px;
+$uni-border-radius-circle: 50%;
+
+/* 间距 */
+$uni-spacing-row-sm: 8px;
+$uni-spacing-row-base: 12px;
+$uni-spacing-row-lg: 16px;
+$uni-spacing-col-sm: 4px;
+$uni-spacing-col-base: 8px;
+$uni-spacing-col-lg: 12px;

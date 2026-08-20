@@ -1,0 +1,7 @@
+{
+	"name": "manageArticle",
+	"version": "1.0.0",
+	"description": "文章管理 - 删除、修改文章",
+	"main": "index.js",
+	"dependencies": {}
+}

@@ -1,0 +1,38 @@
+{
+	"bsonType": "object",
+	"description": "阅读历史表 - 用户的浏览记录",
+	"required": ["userId", "articleId", "readTime"],
+	"permission": {
+		"read": "doc.userId == auth.userId",
+		"create": "doc.userId == auth.userId",
+		"update": false,
+		"delete": "doc.userId == auth.userId",
+		"count": "doc.userId == auth.userId"
+	},
+	"properties": {
+		"_id": {
+			"description": "记录ID"
+		},
+		"userId": {
+			"bsonType": "string",
+			"description": "用户ID"
+		},
+		"articleId": {
+			"bsonType": "string",
+			"description": "文章ID"
+		},
+		"article": {
+			"bsonType": "object",
+			"description": "文章快照",
+			"properties": {
+				"title": { "bsonType": "string" },
+				"sourceName": { "bsonType": "string" },
+				"publishTime": { "bsonType": "number" }
+			}
+		},
+		"readTime": {
+			"bsonType": "number",
+			"description": "阅读时间"
+		}
+	}
+}

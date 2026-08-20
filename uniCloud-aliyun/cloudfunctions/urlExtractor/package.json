@@ -1,0 +1,9 @@
+{
+	"name": "urlExtractor",
+	"version": "1.0.0",
+	"description": "URL extraction cloud function with batch processing and optional 404 validation",
+	"main": "index.js",
+	"dependencies": {
+		"axios": "^1.6.0"
+	}
+}
